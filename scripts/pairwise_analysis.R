@@ -1,5 +1,5 @@
 # Leucosidea and veg community data
-# GGHNp, January 2017
+# GGHNP, January 2017
 #
 # Authors: Tanya Strydom
 #          Peter le Roux
