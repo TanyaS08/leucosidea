@@ -6,13 +6,15 @@
 # Contact: tanya.strydom@icloud.com
 
 #' ------------------------------------------------------------------#
-#'  DATA IMPORTING AND DATAFRAMES
-#'  
+#'  ISSUES
+#'  Traitsstrap only does community weighted - i.e. would still have 
+#'  to bootstrap trait values if doing by species analyses
 #' ------------------------------------------------------------------#
 
 #' ------------------------------------------------------------------#
 #'   TO DO:
-#'   
+#'   Species level bootstrapping
+#'   Include pariwise analysis for species
 #' ------------------------------------------------------------------#
 #' 
 #' ### 0) Preamble ----
