@@ -1,0 +1,1007 @@
+---
+title: "Results"
+author: "Tanya Strydom"
+date: "20 February 2019"
+output:
+  word_document: default
+  pdf_document:
+    fig_caption: yes
+    fig_crop: no
+    highlight: haddock
+    keep_tex: yes
+subtitle: In prep
+header-includes:
+- \usepackage{graphicx}
+- \usepackage{float}
+always_allow_html: yes
+---
+```{r setup, echo=FALSE,warning=FALSE}
+ library(knitr)
+  opts_chunk$set(fig.path='figure/graphics-', 
+                 cache.path='cache/graphics-', 
+                 fig.align='center',
+                 external=TRUE,
+                 echo=TRUE,
+                 warning=FALSE,
+                 fig.pos='H'
+                )
+  a4width<- 8.3
+  a4height<- 11.7
+```
+
+# Pairwise  
+  
+This is for environmental variables (STemp, SMoist, Temp) and richness and cover. I've used the RII values (as opposed to the difference that we used orginally) I read the original paper that developed the RII and I don't see any reason why we cant use this for abiotic variables. Ultimately, this makes the paper simpler as we apply the same method across the board (Using RII for functional traits as well). For clarity I calculated RII as:
+$$RII = (under - open)/(open - under)$$  
+So a negative value means that the preformance is 'poorer' under *Leucosidea*  
+I've used bootstrapping to test if the RII is significantly different from zero - this saves us from violating any assumptions. In this case bold indicates that we can say that the RII vals are significantly different from zero. Below is the results for the environmental variables and richness along with cover.  
+
+```{r difference, echo=FALSE,warning=FALSE}
+env <- read.table("LeucoENV.txt", header = T)
+env_RII <- (env[,c(13:17)]-env[,c(18:22)])/
+  (env[,c(13:17)]+env[,c(18:22)])
+
+#Bootstrapping
+library(boot)
+bootmean <- function(x, i) mean(x[i]) #function for bootstrap
+bootstrap_env <- matrix(NA, nrow = ncol(env_RII), ncol = 3) #empty matrix
+
+for(i in 1:ncol(env_RII)) {
+  x <- na.omit(env_RII[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_env[i,1] <- mean(t) #simulated grand mean
+	bootstrap_env[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_env[i,3] <- bc$percent[1,5] #upper CI's
+}
+
+te <- as.data.frame(bootstrap_env)
+row.names(te) <- c("Temp","STemp","SMoist","Cover",
+                   "Richness")
+colnames(te) <- c("Mean", "LCI", "UCI")
+y <- ifelse(te$LCI <=0 & te$UCI >=0, F, T) #ID if CI interval crosses zero
+
+GF <- read.delim("GFrichcov.txt", header = T)
+GF[GF$Microsite == 'Under',]
+GF = cbind(GF[GF$Microsite == 'Under',],GF[GF$Microsite == 'Control',])
+
+GFRII <- (GF[,c(3,4)]-GF[,c(7,8)])/
+  (GF[,c(3,4)]+GF[,c(7,8)])
+GFRII$type = GF$Type
+
+GFF = GFRII[GFRII$type == 'Forb',c(1,2)]
+GFG = GFRII[GFRII$type == 'Grass',c(1,2)]
+
+#Bootstrapping
+library(boot)
+bootmean <- function(x, i) mean(x[i]) #function for bootstrap
+bootstrap_GFF <- matrix(NA, nrow = ncol(GFF), ncol = 3) #empty matrix
+
+for(i in 1:ncol(GFF)) {
+  x <- na.omit(GFF[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_GFF[i,1] <- mean(t) #simulated grand mean
+	bootstrap_GFF[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_GFF[i,3] <- bc$percent[1,5] #upper CI's
+}
+
+tf <- as.data.frame(bootstrap_GFF)
+colnames(tf) <- c("Mean", "LCI", "UCI")
+row.names(tf) <- c("Richness", "Cover")
+
+bootstrap_GFG <- matrix(NA, nrow = ncol(GFG), ncol = 3) #empty matrix
+
+for(i in 1:ncol(GFG)) {
+  x <- na.omit(GFG[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_GFG[i,1] <- mean(t) #simulated grand mean
+	bootstrap_GFG[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_GFG[i,3] <- bc$percent[1,5] #upper CI's
+}
+
+tg <- as.data.frame(bootstrap_GFG)
+colnames(tg) <- c("Mean", "LCI", "UCI")
+row.names(tg) <- c("Richness", "Cover")
+
+other_boot <- rbind(te, tg, tf)
+other_boot$var <- c("Air Temperature","Soil Temperature","Soil Moisture",
+                    "Species Cover", "Species Richness",
+                    "Species Cover", "Species Richness",
+                    "Species Cover", "Species Richness")
+other_boot$grp <- c(rep("Microclimate",3),
+                    rep("Vegetation",2),
+                    rep("Grass",2),
+                    rep("Forb",2))
+
+
+
+
+```
+
+```{r env table, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(kableExtra)
+row.names(te) <- c("Temp","STemp","SMoist","Cover",
+                   "Richness")
+colnames(te) <- c("Mean", "LCI", "UCI")
+library(dplyr)
+library(tidyverse)
+
+kable(te, digits=4, booktabs = T) %>%
+  row_spec(c(1,2,4), bold = T)  %>%
+  kable_styling(latex_options = "hold_position")
+```
+
+With regards to modelling the data - I think we should just go with a 'fixed' model across the board as opposed to finding the best subset? This again makes for a simpler output/story especially since there are so many things were testing/doing.
+$$RII = LeuCov + Theight + Circ + NNA + ContHei$$
+
+```{r GLMM, message=FALSE, warning=FALSE, include=FALSE}
+pairs(env[,c(4,6:9,12)])
+cor(env[,c(4,6:9,12)])
+
+#would argue that no vars are highly correlated (ex maybe height and circumference but only 0.6)
+
+
+```
+
+# Community Composition  
+  
+# Funtional Traits 
+## Community Level  
+I've used bootstrapping to calculate the means of the different FT's (as opposed to a t-test as RII values are bound by -1 and 1). Thus if the 95% CI of the means include 0 we can say that the RII values are not significantly different from zero. Number of iterations = 1000. If we do end up reporting this I think we could probably do it graphically.  
+
+```{r include=FALSE, warning=FALSE}
+FT <- read.table("FT.txt", header = T)
+FT$NNA <- (FT$NN1+FT$NN2)/2
+#Subset
+FT_under <- FT[FT$Plot == "Under",]
+FT_open <- FT[FT$Plot == "Control",]
+#RII VALS
+FT_RII <- (FT_under[,c(7,8,9,10,18,19)] - FT_open[,c(7,8,9,10,18,19)])/
+  (FT_under[,c(7,8,9,10,18,19)] + FT_open[,c(7,8,9,10,18,19)])
+
+#Bootstrapping
+library(boot)
+bootmean <- function(x, i) mean(x[i]) #function for bootstrap
+bootstrap_data <- matrix(NA, nrow = ncol(FT_RII), ncol = 3) #empty matrix
+
+for(i in 1:ncol(FT_RII)) {
+  x <- na.omit(FT_RII[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_data[i,1] <- mean(t) #simulated grand mean
+	bootstrap_data[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_data[i,3] <- bc$percent[1,5] #upper CI's
+}
+```
+
+```{r kable, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(kableExtra)
+bd <- as.data.frame(bootstrap_data)
+row.names(bd) <- c("SA","Chlorophyll","Toughness","Plant Height",
+                   "LDMC", "SLA")
+colnames(bd) <- c("Mean", "LCI", "UCI")
+library(dplyr)
+library(tidyverse)
+
+kable(bd, digits=4, booktabs = T) %>%
+  row_spec(c(1,4:6), bold = T) %>%
+  kable_styling(latex_options = "hold_position")
+```
+
+Interesting looking at the results - plants are taller and have larger leaves (maybe a response to shading?). Although notably the means are all around and about zero.   
+  
+  Modelling the data is a bit 'tricky' with regard to their probability distribution. Strictly speaking the data are bounded by [-1,1], but they do take on a normal distribution i.e. we could argue that this is a truncated normal distribution. We can't model them as binomial as that is bound [0,1]. The lme4 package doesn't 'support' a truncated normal distribution although from what I've come across online you can treat a truncated normal distribution as normal. Alternatively, maybe we could transform the data to fit within the bounds of a binomial distribution but I would be hesitant to do this as I think we make the process uneccassarily complicated and 'loose touch' with the data. For now I've just run LMERs on the four 'significant' functional traits (SA, Plant height, LDMC, SLA) using control habitat (open, short, tall), tree height, circumference and nearest neighbour average, with species as a random effect (as we would assume that the different species naturally have different traits).
+$$FT = Habitat + Theight + Circ + NNA + (1|Species) $$
+
+```{r GLMM FT, eval = FALSE, include = FALSE, echo= FALSE, message=FALSE, warning=FALSE}
+#testing for covariation between predict vars
+pairs(FT_open[,c(13,14,20)])
+cor(FT_open[,c(13,14,20)], use = "pairwise.complete.obs")
+
+#testing distribution of response vars
+#RII_SW <- matrix(NA, nrow = ncol(FT_RII), ncol = 2) #empty matrix
+#for(i in 1:ncol(FT_RII)) {
+  #x <- na.omit(FT_RII[[i]]) #remove NA from col
+  #sw <- shapiro.test(FT_RII[[i]]) #Shapiro-wilke
+	#RII_SW[i,1] <- sw$p.value #save p-values
+	#RII_SW[i,2] <- ifelse(RII_SW[i,1]<=0.05, T, F) #T = data not norm
+#}
+
+#new dataset with RII and pred vars
+FT_mod <- bind_cols(FT_RII, FT_open[,c(4,12:14,20)])
+
+#transfrom var 2 & 5
+library(MASS)
+boxcox((LDMC+2) ~ Habitat + Theight + Circ + NNA, dat=FT_mod)
+
+#models
+library(lme4)
+library(lmerTest)
+fm1 <- lmer(PHeight ~ Habitat + Theight + Circ + NNA
+         + (1|Species), data = FT_mod)
+summary(fm1)
+anova(fm1)
+plot(fm1)
+
+fm2 <- lmer(LDMC ~ Habitat + Theight + Circ + NNA
+         + (1|Species), data = FT_mod)
+summary(fm2)
+plot(fm2)
+
+fm3 <- lmer(SLA ~ Habitat + Theight + Circ + NNA
+         + (1|Species), data = FT_mod)
+summary(fm3)
+plot(fm3)
+
+fm4 <- lmer(PHeight ~ Habitat + Theight + Circ + NNA
+         + (1|Species), data = FT_mod)
+summary(fm4)
+anova(fm4)
+plot(fm4)
+
+```
+
+I haven't printed the model outputs but as it stands non of the models (based on the one stated above) are significant for all three of the functional traits. So it's pretty similar results to the microclimate - suggesting that the presence of a tree is enough to drive the difference. 
+
+### Multivariate analysis###  
+ For funsies I did a NMDS for the species x trait matrix and adonis tests and the results are pretty cool. Just a side note I removed toughness from the analysisi since we had a lot of NAs (many *Miscanthus* >10 and a few small *Oxalis* and *Heli* leaves) So addonis results indicate that habitat (but not plot) is significant and so is the interaction between species and habitat. This implies that the functional trait 'composition' of an individual differs in different habitats but that its a bit more nuanced than simply Leuco present/absent and that the surroundiong vegetation also playes a role? Although I think that this result might be 'problematic' since some species e.g. *Miscanthus* almost always occur in what we classiifed as tall habitat since it tends to grow in clumps and it has its own unique set of functional traits. You can kind of see this if you compare the two NMDS plots since *Miscanthus* and tall have a pretty strong correlation.  
+ I do think that the species NMDS is interesting/compliments the species specific FT analysis to an extent. *Miscanthus* is the only species with a positive RII for cover (although not significant) and it appears to have a distinct set of traits when compared to the others i.e. those traits may be more resistant to the effects of *Leucosidea*? Whereas both *Oxalis* and *Commelina* are also distinct and negatively affected by *Leucosidea*. *Tristchya* confuese ma little bit though.  
+ 
+ 
+```{r NMDS FT, message=FALSE, warning=FALSE, include=FALSE, echo = FALSE}
+library(vegan)
+FTNMDS <- as.data.frame(FT[,c(1:4,7,8,10,12,18,19)])
+FTNMDS <- na.omit(FTNMDS)
+row.names(FTNMDS) <- FTNMDS$Sample
+levels(FTNMDS$Habitat)[levels(FTNMDS$Habitat)=="Away"] <- "Short"
+levels(FTNMDS$Plot)[levels(FTNMDS$Plot)=="Control"] <- "Away"
+
+NMDS <- metaMDS(FTNMDS[c(5,6,7,9,10)], distance = "bray", trymax = 100)
+NMDS$stress
+
+#ordiplot(NMDS, type="none", display="sites") +
+#orditorp(NMDS, type="points", display="sites", labels = F,
+         #cex = 1.5, col=c('cornflowerblue','mediumspringgreen','firebrick4',
+         #               'darkgoldenrod','mediumorchid4','burlywood4',
+         #               'lightcoral')[FTNMDS$Species],
+        # pch = c(0,15)[FTNMDS$Plot])
+```
+
+```{r NMDS, message=FALSE, warning=FALSE, include=TRUE, echo = FALSE}
+
+library(ggplot2)
+library(ggrepel)
+NMDS2 <- data.frame(MDS1 = NMDS$points[,1], MDS2 = NMDS$points[,2],
+                    group = FTNMDS$Habitat)
+NMDS.mean <- aggregate(NMDS2[,1:2],list(group = NMDS2$group),mean) #used to show labels on plot
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+  {
+    theta <- (0:npoints) * 2 * pi/npoints
+    Circle <- cbind(cos(theta), sin(theta))
+    t(center + scale * t(Circle %*% chol(cov)))
+  } # creates path for ellipse stored in df_ell
+
+  df_ell <- data.frame()
+  for(g in levels(NMDS2$group)){
+    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS2[NMDS2$group==g,],
+                    veganCovEllipse(cov.wt(cbind(MDS1,MDS2),wt=rep(1/length(MDS1),length(MDS1)))$cov,center=c(mean(MDS1),mean(MDS2)))))
+                    ,group=g))
+  }
+
+ggplot(data = NMDS2, aes(MDS1, MDS2))  +
+  geom_path(data=df_ell, aes(x=MDS1, y=MDS2,colour=group)) +
+  geom_text_repel(data = NMDS.mean, x=NMDS.mean$MDS1, y=NMDS.mean$MDS2,
+             label=NMDS.mean$group, label.padding = 0.15) +
+  theme_classic()
+
+ad4 <- adonis(FTNMDS[c(5,6,7,9,10)] ~ FTNMDS$Plot * FTNMDS$Species)
+ad4
+
+FTNMDS$GroForm <- FTNMDS$Species
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Commelina"] <- "Forb"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Helichrysum"] <- "Forb"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Miscanthus"] <- "Grass"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Oxalis"] <- "Forb"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Pseudognath"] <- "Forb"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Themeda"] <- "Grass"
+levels(FTNMDS$GroForm)[levels(FTNMDS$GroForm)=="Tristachya"] <- "Grass"
+
+ad3 <- adonis(FTNMDS[c(5,6,7,9,10)] ~ FTNMDS$Plot * FTNMDS$GroForm)
+ad3
+
+```
+
+```{r NMDS spp, message=FALSE, warning=FALSE, include=TRUE, echo=FALSE}
+NMDS2 <- data.frame(MDS1 = NMDS$points[,1], MDS2 = NMDS$points[,2],
+                    group = FTNMDS$Species)
+NMDS.mean <- aggregate(NMDS2[,1:2],list(group = NMDS2$group),mean) #used to show labels on plot
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+  {
+    theta <- (0:npoints) * 2 * pi/npoints
+    Circle <- cbind(cos(theta), sin(theta))
+    t(center + scale * t(Circle %*% chol(cov)))
+  } # creates path for ellipse stored in df_ell
+
+  df_ell <- data.frame()
+  for(g in levels(NMDS2$group)){
+    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS2[NMDS2$group==g,],
+                    veganCovEllipse(cov.wt(cbind(MDS1,MDS2),wt=rep(1/length(MDS1),length(MDS1)))$cov,center=c(mean(MDS1),mean(MDS2)))))
+                    ,group=g))
+  }
+
+
+ggplot(data = NMDS2, aes(MDS1, MDS2))  +
+  geom_path(data = df_ell, aes(x= MDS1, y= MDS2,
+                                 colour=group)) +
+  geom_text_repel(data = NMDS.mean, x=NMDS.mean$MDS1, y=NMDS.mean$MDS2,
+             label=NMDS.mean$group, label.padding = 0.15) +
+  theme_classic()
+
+```
+
+```{r NMDS spp opt 2, message=FALSE, warning=FALSE}
+
+NMDS2 <- data.frame(MDS1 = NMDS$points[,1], MDS2 = NMDS$points[,2],
+                    group = paste(FTNMDS$Species,FTNMDS$Plot,sep="-"))
+NMDS.mean <- aggregate(NMDS2[,1:2],
+                       list(group = FTNMDS$Species),
+                       mean) #used to show labels on plot
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+  {
+    theta <- (0:npoints) * 2 * pi/npoints
+    Circle <- cbind(cos(theta), sin(theta))
+    t(center + scale * t(Circle %*% chol(cov)))
+  } # creates path for ellipse stored in df_ell
+
+  df_ell <- data.frame()
+  for(g in levels(NMDS2$group)){
+    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS2[NMDS2$group==g,],
+                    veganCovEllipse(cov.wt(cbind(MDS1,MDS2),wt=rep(1/length(MDS1),length(MDS1)))$cov,center=c(mean(MDS1),mean(MDS2)))))
+                    ,group=g))
+  }
+
+library(tidyr)
+df_ell <- separate(df_ell, group, into = c("Species", "Plot"),
+         sep = "-",
+         remove = FALSE)  
+
+ggplot(data = NMDS2, aes(MDS1, MDS2))  +
+  geom_path(data = df_ell, aes(x= MDS1, y= MDS2,
+                               colour=Species,
+                               linetype = Plot)) +
+  annotate("text",
+           x = 0.28,
+           y = -0.24,
+           label = as.character("Stress = 11.5%"),
+           fontface = "plain",
+           size = 5) +
+  theme_classic() +
+  scale_colour_discrete("Speceis", 
+                        labels = c(expression(italic("Commelina africana")),
+                                   expression(italic("Helichrysum odoratissimum")),
+                                   expression(italic("Miscanthus capensis")),
+                                   expression(italic("Oxalis obliquifolia")),
+                                   expression(italic("Pseudognaphalium luteo-album")),
+                                   expression(italic("Themeda triandra")),
+                                   expression(italic("Tristachya leucothrix")))) +
+  theme(legend.text.align = 0,
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 15))
+
+```
+
+## Species specific
+  I followed the same protocol as with the community level. I've alo added in cover for each of the species as well. Although I don't know if that helps our argument really...
+  
+```{r commelina FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+FT_RII$spp <- FT_open$Species #add spp as factor
+library(boot)
+bootmean <- function(x, i) mean(x[i]) #function for bootstrap
+bootstrap_FTcommelina <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+
+FT_comm <- FT_RII %>%
+  filter(., spp=="Commelina") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_comm[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTcommelina[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTcommelina[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTcommelina[i,3] <- bc$percent[1,5] #upper CI's
+}
+
+```
+
+```{r them FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+library(boot)
+bootmean <- function(x, i) mean(x[i]) #function for bootstrap
+bootstrap_FTthe <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+
+#only Themeda data
+FT_the <- FT_RII %>%
+  filter(., spp=="Themeda") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_the[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTthe[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTthe[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTthe[i,3] <- bc$percent[1,5] #upper CI's
+	}
+
+```
+
+```{r heli FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+bootstrap_FTheli <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+#only Helichrysum data
+FT_heli <- FT_RII %>%
+  filter(., spp=="Helichrysum") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_the[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTheli[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTheli[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTheli[i,3] <- bc$percent[1,5] #upper CI's
+	}
+
+```
+
+```{r mis FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+bootstrap_FTmis <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+#only Miscanthus data
+FT_mis <- FT_RII %>%
+  filter(., spp=="Miscanthus") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_mis[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTmis[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTmis[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTmis[i,3] <- bc$percent[1,5] #upper CI's
+  }
+
+```
+
+```{r ox FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+bootstrap_FTox <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+#only Oxalis  data
+FT_ox <- FT_RII %>%
+  filter(., spp=="Oxalis") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_ox[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTox[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTox[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTox[i,3] <- bc$percent[1,5] #upper CI's
+	}
+```
+
+```{r pseudo FT, echo=FALSE, message=FALSE, warning=FALSE}
+#Bootstrapping
+bootstrap_FTps <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+#only Pseudognath  data
+FT_ps <- FT_RII %>%
+  filter(., spp=="Pseudognath") %>%
+  mutate(spp = NULL)
+
+  for(i in 1:6) {
+  x <- na.omit(FT_ps[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTps[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTps[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTps[i,3] <- bc$percent[1,5] #upper CI's
+  }
+
+```
+
+```{r tri FT, echo=FALSE, message=FALSE, warning=FALSE}
+
+#Bootstrapping
+bootstrap_FTtri <- matrix(NA, nrow = 6, ncol = 3) #empty matrix
+
+#only Tristachya  data
+FT_tri <- FT_RII %>%
+  filter(., spp=="Tristachya") %>%
+  mutate(spp = NULL)
+
+ 
+ for(i in 1:6) {
+  x <- na.omit(FT_tri[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_FTtri[i,1] <- mean(t) #simulated grand mean
+	bootstrap_FTtri[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_FTtri[i,3] <- bc$percent[1,5] #upper CI's
+  }
+
+```
+
+```{r RII cover, echo=FALSE, message=FALSE, warning=FALSE}
+FT_cov <- read.delim("SppCov.txt", header = T)
+FT_covU <- FT_cov[FT_cov$Location == "U",]
+FT_covO <- FT_cov[FT_cov$Location == "C",]
+
+#RII VALS
+FT_covRII <- (FT_covU[,c(4:10)] - FT_covO[,c(4:10)])/
+  (FT_covU[,c(4:10)] + FT_covO[,c(4:10)])
+
+#Bootstrapping
+bootstrap_cov <- matrix(NA, nrow = ncol(FT_covRII), ncol = 3) #empty matrix
+
+for(i in 1:ncol(FT_covRII)) {
+  x <- na.omit(FT_covRII[[i]]) #remove NA from col
+  bss <- boot(x, bootmean, R=10000) #bootstrap
+  bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+  t <- bss$t #save simulated means as vector
+	bootstrap_cov[i,1] <- mean(t) #simulated grand mean
+	bootstrap_cov[i,2] <- bc$percent[1,4] #lower CI's
+	bootstrap_cov[i,3] <- bc$percent[1,5] #upper CI's
+}
+
+library(reshape2)
+FT_covRII_all <- melt(FT_covRII)
+
+bootstrap_cov_all <- matrix(NA, nrow = 1, ncol = 3) #empty matrix
+
+
+x <- na.omit(FT_covRII_all$value) #remove NA from col
+bss <- boot(x, bootmean, R=10000) #bootstrap
+bc <- boot.ci(bss, type="perc") #CI's for Bootstrap
+t <- bss$t #save simulated means as vector
+bootstrap_cov_all[1,1] <- mean(t) #simulated grand mean
+bootstrap_cov_all[1,2] <- bc$percent[1,4] #lower CI's
+bootstrap_cov_all[1,3] <- bc$percent[1,5] #upper CI's
+
+
+```
+
+```{r kable spp FT, echo=FALSE, message=FALSE, warning=FALSE}
+
+bootstrap_cov <- as.data.frame(bootstrap_cov)
+bootstrap_cov <- add_row(as.vector(bootstrap_cov_all))
+colnames(bd) <- c("X1", "X2", "X3")
+
+FT_spp <- bind_rows(bd,
+                    data.frame(bootstrap_FTcommelina),
+                    data.frame(bootstrap_FTheli),
+                    data.frame(bootstrap_FTmis),
+                    data.frame(bootstrap_FTox),
+                    data.frame(bootstrap_FTps),
+                    data.frame(bootstrap_FTthe),
+                    data.frame(bootstrap_FTtri))
+
+FT_spp$sig <- ifelse(FT_spp$X2 <=0 & FT_spp$X3 >=0, F, T)
+FT_spp$trait <- rep(c("SA","Chlorophyll","Toughness","Plant Height",
+                   "LDMC", "SLA"), 8)
+FT_spp <- FT_spp[,c(5,1,2,3,4)]
+colnames(FT_spp) <- c("Trait", "Mean", "LCI", "UCI", "Sig")
+
+kable(FT_spp[,1:4]) %>%
+  kable_styling("striped") %>%
+  row_spec(which(FT_spp$Sig == TRUE), bold = T)%>%
+  pack_rows("Commelina", 1,7) %>%
+  pack_rows("Helichrysum", 8,14) %>%
+  pack_rows("Miscanthus", 15,21) %>%
+  pack_rows("Oxalis", 22,28) %>%
+  pack_rows("Pseudgnathalium", 29,35) %>%
+  pack_rows("Themeda", 36,42) %>%
+  pack_rows("Tristachya", 43,49)
+
+```
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(ggpubr)
+FT_spp$Spp <- c(rep("All Species",6),
+                rep("Commelina africana",6),
+                rep("Helichrysum odoratissimum",6),
+                rep("Miscanthus capensis",6),
+                rep("Oxalis obliqufolia",6),
+                rep("Pseudognathalium luteo-album",6),
+                rep("Themeda tirandra",6),
+                rep("Tristachya leucothrix",6))
+FT_spp$Sig <- as.factor(FT_spp$Sig)
+
+ggplot(FT_spp, aes(y = Mean, x = Trait)) +
+  facet_wrap(vars(Spp), ncol = 2) +
+  geom_pointrange(aes(ymin = LCI, ymax = UCI)) +
+  geom_hline(aes(yintercept = 0.0), linetype = 2) + 
+  theme_classic() +
+  theme(legend.position = "none") +
+  coord_flip()
+
+```
+  
+# CSR Classification
+ 
+```{r csr, echo=FALSE, message=FALSE, warning=FALSE}
+CSR <- read.delim("CSR.txt", header = T)
+
+#ggplot(CSR, aes(x = strafact, fill = Strat)) +
+ # geom_dotplot() +
+ # facet_grid(rows = vars(Plot), cols = vars(Species)) +
+ # theme_minimal()
+
+#commelina
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Commelina")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Commelina")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+library(scales)
+
+cc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+cu <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Helichrysum
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Helichrysum")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Helichrysum")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+hc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+hu <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Miscanthus
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Miscanthus")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Miscanthus")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+mc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+mu <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Oxalis  
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Oxalis")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Oxalis")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+oc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+ou <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Pseudognath  
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Pseudognath")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Pseudognath")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+pc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+pu <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Themeda 
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Themeda")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Themeda")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+thc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+thu <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+#Tristachya
+v <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Control" & Species == "Tristachya")
+
+v <- summary(v$Strat)
+v <- as.data.frame(v)
+v$strat <- rownames(v)
+
+v2 <- CSR %>%
+  na.omit() %>%
+  filter(Plot == "Under" & Species == "Tristachya")
+
+v2 <- summary(v2$Strat)
+v2 <- as.data.frame(v2)
+v2$strat <- rownames(v2)
+
+trc <- ggplot(v, aes(x="", y=v, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+tru <- ggplot(v2, aes(x="", y=v2, fill=strat)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_bw() +
+  theme(axis.title = element_blank())
+
+library(ggpubr)
+
+pie <- ggarrange(cc, cu, oc, ou, hc, hu, mc, mu, pc, pu, trc, tru, thc, tru, 
+          labels = "AUTO",
+          ncol = 4, nrow = 4,
+          common.legend = TRUE, legend = "bottom")
+
+plot(pie)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Themeda",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Themeda",]$C)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Commelina",]$S,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Commelina",]$S)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Helichrysum",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Helichrysum",]$C)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Miscanthus",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Miscanthus",]$C)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Oxalis",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Oxalis",]$C)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Pseudognath",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Pseudognath",]$C)
+
+t.test(CSR[CSR$Plot == "Control" & CSR$Species == "Tristachya",]$C,
+       CSR[CSR$Plot == "Under" & CSR$Species == "Tristachya",]$C)
+
+```
+
+```{r chi 2, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+x = as.matrix(summary(CSR$Strat))
+
+
+
+```
+ 
+ It looks like there may potentially be differences for some of the species between under and open sites. I'm assuming the best approach would be a chi~^2~ test for each species for the different categories.
+ 
+# Long term  
+## iButton  
+
+```{r, include = FALSE}
+dat <- read.table("Leuco_iButtons.txt", header = T)
+dat$Date <- as.Date(dat$Date)
+dat$time <- c(10,13,16,19,22,1,4,7)
+dat$num <- c(1:2248)
+dat$Month <- strftime(dat$Date, "%m")
+dat$Month <- as.factor(dat$Month)
+dat$Day <- as.numeric(format(as.Date(dat$Date), "%j"))
+levels(dat$Month) <- c("Jan","Feb","March","April","May","June","July",
+                       "Aug","Sept","Oct","Nov")
+library(ggplot2)
+```
+
+```{r, include = FALSE, echo=FALSE}
+library(reshape2)
+dat_air <- melt(dat,id.vars=c("num","time","Month"), measure.vars=c("L1AO","L1AU","L2AO","L2AU",
+                                                  "L2BAO","L2BAU"))
+plot1 <- ggplot(dat_air, aes(x=num,y=value, colour=variable))+
+  geom_smooth(na.rm = TRUE, se = FALSE) +
+  scale_color_manual(values=c("burlywood", "burlywood4", "pink1", "pink3",
+              "darkolivegreen1", "darkolivegreen4")) +
+  labs(y = "Temp", x = NULL) +
+  theme_classic()
+
+dat_soil <- melt(dat,id.vars=c("num","time"), measure.vars=c("L2SO","L2SU","L2BSO","L2BSU"))
+plot2 <- ggplot(dat_soil, aes(x=num,y=value, colour=variable))+
+  geom_smooth(na.rm = TRUE, se = FALSE) +
+  scale_color_manual(values=c("pink1", "pink3",
+              "darkolivegreen1", "darkolivegreen4")) +
+  labs(y = "Temp", x = "Days") +
+  theme_classic()
+```
+
+```{r fig, echo=FALSE, message=FALSE, warning=FALSE, warnings=FALSE}
+library(gridExtra)
+grid.arrange(plot1, plot2, nrow=2)
+```
+
+## Soil Moisture  
+
+```{r include = FALSE, echo=FALSE, message=FALSE, warning=FALSE, warnings=FALSE}
+dat <- read.delim("Leuco_SM.txt", header = T)
+dat$Date <- as.Date(dat$Date)
+dat$num <- c(1:2651)
+
+library(reshape2)
+library(ggplot2)
+dat_sm <- melt(dat,id.vars=c("num"), measure.vars=c("L2U","L2O","L3U","L3O"))
+ggplot(dat_sm, aes(x=num,y=value, colour=variable))+
+  geom_smooth(na.rm = TRUE, se = FALSE) +
+  scale_color_manual(values=c("burlywood", "burlywood4", "pink1", "pink3")) +
+  labs(y = "Soil Moisture", x = NULL) +
+  theme_classic()
+```
+
+## Dynamic Time Warping
+
+```{r DTW, eval = FALSE, echo=FALSE, message=FALSE, warning=FALSE, warnings=FALSE}
+library(dtw)
+library(dplyr)
+dat$Day <- as.factor(dat$Day)
+
+datMax <- dat %>%
+  group_by(Day) %>%
+  summarise_all(funs(max))
+datMin <- dat %>%
+  group_by(Day) %>%
+  summarise_all(funs(min))
+
+library(reshape2)
+dat_mair <- melt(datMax,id.vars=c("Day"),
+                 measure.vars=c("L1AO","L1AU","L2AO","L2AU",
+                                                  "L2BAO","L2BAU"))
+dat_mair$Day <- as.numeric(dat_mair$Day)
+
+ggplot(dat_mair, aes(x=Day,y=value, colour=variable))+
+  geom_smooth(na.rm = TRUE, se = FALSE) +
+  scale_color_manual(values=c("burlywood", "burlywood4", "pink1", "pink3",
+              "darkolivegreen1", "darkolivegreen4")) +
+  labs(y = "Temp", x = NULL) +
+  theme_classic()
+
+###Warping 
+alignment<-dtw(datMax$L2AO,datMax$L12AU,keep=TRUE);
+
+## Display the warping curve, i.e. the alignment curve
+plot(alignment,type="threeway")
+
+## Align and plot with the Rabiner-Juang type VI-c unsmoothed recursion
+dtw(datMax$L2AO,datMax$L12AU,keep=TRUE)
+
+## See the recursion relation, as formula and diagram
+rabinerJuangStepPattern(6,"c")
+plot(rabinerJuangStepPattern(6,"c"))
+
+```
