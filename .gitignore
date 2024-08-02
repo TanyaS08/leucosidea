@@ -1,4 +1,8 @@
+# R stuff
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# macOS nonsense
+.DS_Store
