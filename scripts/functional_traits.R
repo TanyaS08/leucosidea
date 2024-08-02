@@ -88,9 +88,8 @@ species_long <-
 ##For now using Site > Treatment > PlotID
 
 trait_bootstrap <-
-  
   #This imputes the  trait data 
-  trait_impute(
+  trait_fill(
     species_long,
     traits_long,
     scale_hierarchy = c("Plot",
@@ -98,13 +97,11 @@ trait_bootstrap <-
     taxon_col = "Species",
     trait_col = "Trait",
     value_col = "Value",
-    abundance_col = "Cover",
+    abundance = "Cover",
     keep_all = TRUE) %>%
-  
-  #This bootstraps the imputed data using CWM
+  #This bootstraps the imputed data
   trait_np_bootstrap(.,
-                     nrep = 1000, #TBD
-                     sample_size = 200) #TBD
+                     nrep = 1000) #TBD
 
 
 #Summary of different moments (\mu, lower CI and upper CI)
@@ -146,11 +143,10 @@ trait_bootstrap_summary %>%
   facet_grid(cols = vars(Trait),
              scales = 'free_x',) +
   geom_pointrange(aes(x = Plot,
-                      y = Mean,
-                      ymin = CIlow.mean,
-                      ymax  = CIhigh.mean,
+                      y = mean,
+                      ymin = ci_low_mean,
+                      ymax  = ci_high_mean,
                       colour = Plot)) +
-  coord_flip() +
   scale_colour_brewer(palette = "RdYlGn")  +
   theme_bw()
 
@@ -163,6 +159,7 @@ trait_bootstrap_summary %>%
 
 traits_wide  <-
   trait_bootstrap %>%
+  ungroup() %>%
   #remove all moments except for mean
   select(-c(variance,
             skewness,

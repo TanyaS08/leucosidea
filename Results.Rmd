@@ -37,7 +37,7 @@ So a negative value means that the preformance is 'poorer' under *Leucosidea*
 I've used bootstrapping to test if the RII is significantly different from zero - this saves us from violating any assumptions. In this case bold indicates that we can say that the RII vals are significantly different from zero. Below is the results for the environmental variables and richness along with cover.  
 
 ```{r difference, echo=FALSE,warning=FALSE}
-env <- read.table("LeucoENV.txt", header = T)
+env <- read.table("data/LeucoENV.txt", header = T)
 env_RII <- (env[,c(13:17)]-env[,c(18:22)])/
   (env[,c(13:17)]+env[,c(18:22)])
 
@@ -62,7 +62,7 @@ row.names(te) <- c("Temp","STemp","SMoist","Cover",
 colnames(te) <- c("Mean", "LCI", "UCI")
 y <- ifelse(te$LCI <=0 & te$UCI >=0, F, T) #ID if CI interval crosses zero
 
-GF <- read.delim("GFrichcov.txt", header = T)
+GF <- read.delim("data/GFrichcov.txt", header = T)
 GF[GF$Microsite == 'Under',]
 GF = cbind(GF[GF$Microsite == 'Under',],GF[GF$Microsite == 'Control',])
 
