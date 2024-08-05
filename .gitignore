@@ -6,3 +6,6 @@
 
 # macOS nonsense
 .DS_Store
+
+# vscode utils
+/.vscode
