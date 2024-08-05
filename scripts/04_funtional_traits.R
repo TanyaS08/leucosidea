@@ -56,7 +56,8 @@ FT_ttest =
 ggplot(FT_long,
        aes(x = Species,
            y = trait_val)) +
-  geom_boxplot(aes(colour = microsite)) +
+  geom_boxplot(aes(colour = microsite),
+               outliers = FALSE) +
   geom_point(data = FT_long %>%
                filter(microsite == "Under"),
              aes(x = as.numeric(Species) + 0.2,
