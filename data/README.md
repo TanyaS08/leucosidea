@@ -6,4 +6,6 @@ datasets (briefly) described below
 
 `microclimate.txt`: This can be viewed as the site/plot metadata in a way. Here there is information about the microclimate (air and soil temperature, soil moisture) as well as more data about the 'target' *Leucosidea* individual and distance to nearest neighbours
 
+`richness_cover_forb_grass.txt`: The summed richness and cover for forbs and grasses 
+
 `spp_richness.txt`: Species cover (and by default richness) for each plot
