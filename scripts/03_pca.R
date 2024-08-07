@@ -9,18 +9,16 @@ library(ggrepel)
 
 ####Import data####
 
-FTarray = read.table("data/FT_NMDS.txt",header=T, row.names = 1)
-#remove NA
-FTarray <- na.omit(FTarray)
-FTarray$Reproductive <- NULL
-FTarray =
-  FTarray %>%
+FTarray = read.table("data/FT.txt",header=T, row.names = 1) %>% 
+  select(Plot, Species, Habitat, Chlorophyll, Toughness, PHeight, SLA, LDMC) %>%
   mutate(Habitat = case_when(Habitat == "Under" ~ "Under",
                              TRUE ~ "Away"))
+#remove NA
+FTarray <- na.omit(FTarray)
 
-dat = FTarray[5:ncol(FTarray)]
-Blob_sp = FTarray[2]
-Blob_microsite = FTarray[3]
+dat = FTarray[4:ncol(FTarray)]
+Blob_sp = FTarray$Species
+Blob_microsite = FTarray$Habitat
 
 titre <- c(Chlorophyll = "Chlorophyll~(mg/m^2)", PHeight = "Plant~height~(m)", SLA = "SLA~(cm^2%.%g)",
            LDMC = "LDMC", Toughness = "Toughness~(N)")[colnames(dat)]
@@ -51,8 +49,8 @@ arrows_all = tibble(
 
 plot_data_all = tibble(Axis1 = x, 
                        Axis2 = y,
-                       FGroup = Blob_sp$Species,
-                       Microsite = Blob_microsite$Habitat)
+                       Species = Blob_sp,
+                       Microsite = Blob_microsite)
 
 ggplot(plot_data_all,
        aes(x = Axis1,
@@ -62,12 +60,12 @@ ggplot(plot_data_all,
              alpha = 0.6,
              colour = "grey50") +
   stat_density_2d(geom = "polygon",
-                  aes(fill = FGroup,
+                  aes(fill = Species,
                       alpha = ..nlevel..),
                   contour_var = "ndensity",
                   breaks = c(0.5, 0.9))+
   stat_density_2d(geom = "polygon",
-                  aes(colour = FGroup),
+                  aes(colour = Species),
                   contour_var = "ndensity",
                   fill = NA,
                   breaks = c(0.5)) +
@@ -100,8 +98,8 @@ ggplot(plot_data_all,
   ylim(-5,5) +
   labs(x = "PC1",
        y = "PC2") +
-  theme(legend.position = 'none')
+  theme(legend.position = 'bottom')
 
 ggsave("figures/FT_pca.png",
        width = 11,
-       height = 6)
+       height = 7)
