@@ -14,9 +14,15 @@ env <- read.table("data/microclimate.txt",
   left_join(.,
             fg_cover,
             by = c("Site" = "Site", "Pair" = "Pair")) %>% 
+  group_by(Site, Pair) %>% 
+  mutate(rich_all_C = sum(richness_forb_C) + sum(richness_grass_C),
+         rich_all_U = sum(richness_forb_U) + sum(richness_grass_U),
+         cov_all_C = sum(cover_forb_C) + sum(cover_grass_C),
+         cov_all_U = sum(cover_forb_U) + sum(cover_grass_U)) %>% 
+  ungroup() %>% 
   # data in long format
   pivot_longer(.,
-               cols = TempU:richness_grass_U,
+               cols = TempU:cov_all_U,
                names_to = "variable") %>%
   # create variable for microsite (and drop from variable)
   mutate(microsite = as.factor(str_extract(variable, ".{1}$")),
@@ -74,15 +80,17 @@ env_plot <-
                               variable == 'cover_forb_' ~ "Forb cover (%)",
                               variable == 'cover_grass_' ~ "Grass cover (%)",
                               variable == 'richness_forb_' ~ "Forb species richness",
-                              variable == 'richness_grass_' ~ "Grass species richness"),
+                              variable == 'richness_grass_' ~ "Grass species richness",
+                              variable == 'rich_all_' ~ "All species richness",
+                              variable == 'cov_all_' ~ "All species cover (%)"),
          microsite = case_when(as.character(microsite) == "U" ~ "Under",
                                .default = "Away"))
 
 plots <- vector('list', 3)
 grp_vars <- vector('list', 3)
 grp_vars[[1]] <- c("Temperature (C)", "Soil temperature (C)", "Soil moisture")
-grp_vars[[3]] <- c("Forb cover (%)", "Grass cover (%)")
-grp_vars[[2]] <- c("Forb species richness", "Grass species richness")
+grp_vars[[3]] <- c("All species cover (%)", "Forb cover (%)", "Grass cover (%)")
+grp_vars[[2]] <- c("All species richness", "Forb species richness", "Grass species richness")
 
 for (i in 1:length(plots)) {
   
