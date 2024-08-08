@@ -98,5 +98,5 @@ ggplot(FT_long,
   )
 
 ggsave("figures/FT_boxplot.png",
-       width = 7,
-       height = 12)
+       width = 8,
+       height = 13)
