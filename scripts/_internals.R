@@ -43,21 +43,19 @@ growth_forms = tibble(growth_form = ifelse(spp_list %in% grass_sp,
 
 # basically see if a species occurs in only one or both microsites
 
-df <- dat %>% 
+spp_fidelity <- dat %>% 
   # get microsite from ID
-  mutate(Habitat = str_extract(row.names(.), ".{1}$")) %>%
+  mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
-  mutate(Habitat = case_when(Habitat == "U" ~ "Under",
+  mutate(Microsite = case_when(Microsite == "U" ~ "Under",
                              TRUE ~ "Away")) %>% 
-  group_by(Habitat) %>%
+  group_by(Microsite) %>%
   summarise(across(Ajuga_ophrydis:Tristachya_leucothrix, 
-                   ~ sum(.x)))
-
-distinct(colnames(df))
-
-spp_fidelity <- as.data.frame(t(df[, -1])) %>% 
-  mutate(species = row.names(.))
-colnames(spp_fidelity) <- c("Away", "Under", "species")
+                   ~ sum(.x))) %>% 
+  pivot_longer(-Microsite,
+               names_to = "species",
+               values_to = "cover")  %>% 
+  filter(!species == "Dead")
 
 #remove for cleaner working environment
-rm(dat, spp_list, grass_sp, df)
+rm(dat, spp_list, grass_sp)
