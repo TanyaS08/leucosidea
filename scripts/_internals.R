@@ -39,6 +39,35 @@ growth_forms = tibble(growth_form = ifelse(spp_list %in% grass_sp,
                                            "forb"), 
                       species = spp_list)
 
+####Functional group cover/richness####
+
+# richness at each plot for grasses and forbs
+
+fg_cover <-
+  dat %>% 
+  # get microsite from ID
+  mutate(Microsite = str_extract(row.names(.), ".{1}$"),
+         Pair = rep(1:135, 2)) %>%
+  # standardise naming
+  pivot_longer(-c(Microsite, Pair, Site),
+               names_to = "species",
+               values_to = "cover") %>% 
+  left_join(.,
+            growth_forms) %>% 
+  filter(species != "Dead") %>% 
+  select(-species) %>% 
+  group_by(Site, Pair, Microsite, growth_form) %>% 
+  mutate(richness = ifelse(cover > 0, 1, 0)) %>% 
+  summarise(richness = sum(richness),
+            cover = sum(cover)) %>% 
+  ungroup() %>% 
+  pivot_wider(
+    names_from = c(growth_form, Microsite),
+    values_from = c(cover, richness)
+  ) %>% 
+  ungroup()
+
+
 ####Site fidelity fo species####
 
 # basically see if a species occurs in only one or both microsites
@@ -48,7 +77,7 @@ spp_fidelity <- dat %>%
   mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
   mutate(Microsite = case_when(Microsite == "U" ~ "Under",
-                             TRUE ~ "Away")) %>% 
+                               TRUE ~ "Away")) %>% 
   group_by(Microsite) %>%
   summarise(across(Ajuga_ophrydis:Tristachya_leucothrix, 
                    ~ sum(.x))) %>% 

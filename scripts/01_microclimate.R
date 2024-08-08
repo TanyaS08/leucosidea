@@ -3,14 +3,19 @@ library(lme4)
 library(MuMIn)
 library(tidyverse)
 
+source("scripts/_internals.R")
+
 ####Import data####
 env <- read.table("data/microclimate.txt", 
                   header = T) %>%
   # remove some columns
-  dplyr::select(!c(Wpt, Alt, TimeH, nn1, nn2, TempA)) %>%
+  dplyr::select(!c(Wpt, Alt, TimeH, nn1, nn2, TempA, CovU, CovC, RichU, RichC)) %>%
+  left_join(.,
+            fg_cover,
+            by = c("Site" = "Site", "Pair" = "Pair")) %>% 
   # data in long format
   pivot_longer(.,
-               cols = TempU:RichC,
+               cols = TempU:richness_grass_U,
                names_to = "variable") %>%
   # create variable for microsite (and drop from variable)
   mutate(microsite = as.factor(str_extract(variable, ".{1}$")),
@@ -65,10 +70,36 @@ env_plot <-
   mutate(variable = case_when(variable == 'Temp' ~ "Temperature (C)",
                               variable == 'STemp' ~ "Soil temperature (C)",
                               variable == 'SMoist' ~ "Soil moisture",
-                              variable == 'Cov' ~ "Species cover (%)",
-                              variable == 'Rich' ~ "Species Richness"),
+                              variable == 'cover_forb_' ~ "Forb cover (%)",
+                              variable == 'cover_grass_' ~ "Grass cover (%)",
+                              variable == 'richness_forb_' ~ "Forb species richness",
+                              variable == 'richness_grass_' ~ "Grass species richness"),
          microsite = case_when(as.character(microsite) == "U" ~ "Under",
                                .default = "Away"))
+
+
+
+for (i in 1:length(vars)) {
+  
+  dat <- env %>%
+    filter(variable == vars[i])
+  
+  # model
+  lmm <- lmer(formula = value ~ microsite + (1 | Site), 
+              dat)
+  summ = summary(lmm)$coefficients
+  
+  # extract relevant summary stats
+  model_results[i, 2] <- summ[1,1]
+  model_results[i, 3] <- summ[1,2]
+  model_results[i, 4] <- summ[1,3]
+  model_results[i, 5] <- summ[2,1]
+  model_results[i, 6] <- summ[2,2]
+  model_results[i, 7] <- summ[2,3]
+  model_results[i, 8] <- r.squaredGLMM(lmm)[1]
+  model_results[i, 9] <- r.squaredGLMM(lmm)[2]
+  
+}
 
 ggplot(env_plot,
        aes(x = variable,
@@ -99,14 +130,13 @@ ggplot(env_plot,
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   scale_colour_manual(values = c('goldenrod1','forestgreen'),
                       name = "Microsite") +
-  labs(y = "Microclimate value") +
+  labs(y = "Value") +
   theme_classic() +
   theme(
     axis.text.x = element_markdown(),
     plot.caption = element_markdown(),
     legend.position = 'bottom'
   )
-
 
 ggsave("figures/microclimate_boxplot.png",
        width = 13,
