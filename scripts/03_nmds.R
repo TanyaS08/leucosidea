@@ -59,7 +59,7 @@ ggplot(comm_site_nmds,
        aes(x = MDS1,
            y = MDS2)) +
   scale_alpha(range = c(0.3, 0.7)) +
-  geom_point(size = 0.2,
+  geom_point(size = 0.8,
              alpha = 0.6,
              colour = "grey50") +
   stat_density_2d(data = comm_sp_nmds,
