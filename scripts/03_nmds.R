@@ -1,11 +1,8 @@
 ####Libraries####
 library(tidyverse)
-library(ggbeeswarm)
 library(ggforce)
 library(ggtext)
 library(vegan)
-library(ade4)
-library(ggrepel)
 
 set.seed(66)
 
