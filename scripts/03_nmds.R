@@ -88,8 +88,8 @@ ggplot(comm_site_nmds,
   theme_classic() +
   theme(legend.position = 'bottom',
         plot.title = element_text(size = 20)) +
-  xlim(-1,1) +
-  ylim(-1,1) +
+  xlim(-0.65,0.65) +
+  ylim(-0.65,0.65) +
   labs(x = "MDS1",
        y = "MDS2",
        caption = paste0( "Stress = ", round(comm_mds$stress*100, digits = 2), "%"))
