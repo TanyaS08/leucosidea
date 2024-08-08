@@ -83,7 +83,8 @@ ggplot(FT_long,
              size = 4) +
   facet_wrap(vars(trait),
              scales = "free",
-             labeller = label_parsed) +
+             labeller = label_parsed,
+             ncol = 2) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   scale_colour_manual(values = c('goldenrod1','forestgreen'),
                       name = "Microsite") +
@@ -97,5 +98,5 @@ ggplot(FT_long,
   )
 
 ggsave("figures/FT_boxplot.png",
-       width = 13,
-       height = 8)
+       width = 7,
+       height = 12)
