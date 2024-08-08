@@ -173,22 +173,22 @@ ggplot(plot_data_all,
                    x = x,
                    y = y),
                arrow = arrow(length=unit(0.2,"cm")),
-               size = 0.2) +
+               size = 0.3) +
   geom_label_repel(data = arrows_all,
                    aes(label = Trait,
                        x = xend,
                        y = yend),
                    hjust = 0.1,
                    parse = TRUE, 
-                   size = 2,
+                   size = 3,
                    check_overlap = FALSE) +
   scale_fill_manual(values = ft_spp_colours$colour,
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
   theme(legend.position = 'bottom',
         plot.title = element_text(size = 20)) +
-  xlim(-5,5) +
-  ylim(-5,5) +
+  xlim(-4.3,4.3) +
+  ylim(-4.3,4.3) +
   labs(x = "PC1",
        y = "PC2")
 
