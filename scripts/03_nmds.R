@@ -7,10 +7,19 @@ library(vegan)
 library(ade4)
 library(ggrepel)
 
+set.seed(66)
+
+# for spp growth forms
+source("scripts/_internals.R")
+
 ####Import data####
+
 # array for species community
-COMMarray <- read.table("data/spp_richness.txt", header=T, row.names = 1) %>% 
-  select(-Site) %>% 
+COMMarray <- read.table("data/spp_richness.txt", header=T, row.names = 1) %>%
+  #remove unneeded cols
+  select(-c(Site, Dead)) %>% 
+  # remove problem site
+  filter(!row.names(.) %in% "A11C") %>% 
   # get microsite from ID
   mutate(Habitat = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
@@ -34,66 +43,59 @@ titre <- c(Chlorophyll = "Chlorophyll~(mg/m^2)", PHeight = "Plant~height~(m)", S
 
 ####Analysis - Community####
 
-dat = COMMarray[2:ncol(COMMarray)]
-Blob_sp = COMMarray$growth_form
-Blob_microsite = COMMarray$Habitat
-
-PCA <- ade4::dudi.pca(dat, center = T, scale = T, scannf = F, nf = ncol(dat))
-means<- PCA$cent
-sds <- PCA$norm
-eigen <- round(PCA$eig / sum(PCA$eig) * 100, 1)
-
-signx <- ifelse(sign(sum(sign(PCA$c1[, "CS1"]))) < 0, -1 ,1)
-signy <- ifelse(sign(sum(sign(PCA$c1[, "CS2"]))) < 0, -1, 1)
-x = signx * PCA$li[, 'Axis1']
-y = signy * PCA$li[, 'Axis2']
-Axis1 <- signx * PCA$li[, 'Axis1']
-Axis2 <- signy * PCA$li[, 'Axis2']
-
-mult <- 4
-arrows_all = tibble(
-  Trait = titre, 
-  xend = signx * PCA$co[, 'Comp1'] * mult,
-  yend = signy * PCA$co[, 'Comp2'] * mult,
-  x = rep(0, length(titre)),
-  y = rep(0, length(titre)))
+comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], distance = "bray") 
 
 ####Plot####
 
-plot_data_all = tibble(Axis1 = x, 
-                       Axis2 = y,
-                       #Species = Blob_sp,
-                       Microsite = Blob_microsite)
+comm_sp_nmds <- as.data.frame(comm_mds$species) %>% 
+  mutate(species = row.names(.)) %>% 
+  left_join(.,
+            growth_forms)  %>% 
+  right_join(.,
+            spp_fidelity) %>% 
+  filter(cover > 0)
 
-ggplot(plot_data_all,
-       aes(x = Axis1,
-           y = Axis2)) +
+comm_site_nmds <- as.data.frame(comm_mds$points) %>% 
+  mutate(Microsite = COMMarray$Habitat) 
+
+ggplot(comm_site_nmds,
+       aes(x = MDS1,
+           y = MDS2)) +
   scale_alpha(range = c(0.3, 0.7)) +
   geom_point(size = 0.2,
              alpha = 0.6,
              colour = "grey50") +
-  stat_density_2d(geom = "polygon",
-                  aes(fill = Microsite,
+  stat_density_2d(data = comm_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      fill = growth_form,
                       alpha = ..nlevel..),
                   contour_var = "ndensity",
                   breaks = c(0.5, 0.9)) +
-  stat_density_2d(geom = "polygon",
-                  aes(colour = Microsite),
+  stat_density_2d(data = comm_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      colour = growth_form),
                   contour_var = "ndensity",
                   fill = NA,
                   breaks = c(0.5)) +
   guides(alpha = FALSE,
          fill = NULL) +
-  scale_fill_manual(values = c('goldenrod1', 'forestgreen')) +
-  scale_colour_manual(values = c('goldenrod1', 'forestgreen')) +
+  facet_grid(cols = vars(Microsite)) +
+  scale_fill_manual(values = c('#01665E', '#BF822E'),
+                    name = "Growth form") +
+  scale_colour_manual(values = c('#01665E', '#BF822E'),
+                      name = "Growth form") +
   theme_classic() +
   theme(legend.position = 'bottom',
         plot.title = element_text(size = 20)) +
-  xlim(-1.5,1.5) +
-  ylim(-1.5,1.5) +
-  labs(x = "PC1",
-       y = "PC2") +
-  theme(legend.position = 'bottom')
+  xlim(-1,1) +
+  ylim(-1,1) +
+  labs(x = "MDS1",
+       y = "MDS2",
+       caption = paste0( "Stress = ", round(comm_mds$stress*100, digits = 2), "%"))
 
 ggsave("figures/community_pca.png",
        width = 11,
