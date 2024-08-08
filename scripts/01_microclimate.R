@@ -1,6 +1,7 @@
 ####Libraries####
 library(lme4)
 library(MuMIn)
+library(patchwork)
 library(tidyverse)
 
 source("scripts/_internals.R")
@@ -77,34 +78,21 @@ env_plot <-
          microsite = case_when(as.character(microsite) == "U" ~ "Under",
                                .default = "Away"))
 
+plots <- vector('list', 3)
+grp_vars <- vector('list', 3)
+grp_vars[[1]] <- c("Temperature (C)", "Soil temperature (C)", "Soil moisture")
+grp_vars[[3]] <- c("Forb cover (%)", "Grass cover (%)")
+grp_vars[[2]] <- c("Forb species richness", "Grass species richness")
 
-
-for (i in 1:length(vars)) {
+for (i in 1:length(plots)) {
   
-  dat <- env %>%
-    filter(variable == vars[i])
+  dat <- env_plot %>% 
+          filter(variable %in% grp_vars[[i]])
   
-  # model
-  lmm <- lmer(formula = value ~ microsite + (1 | Site), 
-              dat)
-  summ = summary(lmm)$coefficients
-  
-  # extract relevant summary stats
-  model_results[i, 2] <- summ[1,1]
-  model_results[i, 3] <- summ[1,2]
-  model_results[i, 4] <- summ[1,3]
-  model_results[i, 5] <- summ[2,1]
-  model_results[i, 6] <- summ[2,2]
-  model_results[i, 7] <- summ[2,3]
-  model_results[i, 8] <- r.squaredGLMM(lmm)[1]
-  model_results[i, 9] <- r.squaredGLMM(lmm)[2]
-  
-}
-
-ggplot(env_plot,
+  plots[[i]] <- ggplot(dat,
        aes(x = variable,
            y = value)) +
-  geom_point(data = env_plot %>%
+  geom_point(data = dat %>%
                filter(microsite == "Under"),
              aes(x = 1.2,
                  y = value),
@@ -113,7 +101,7 @@ ggplot(env_plot,
              colour = "white",
              shape = 21,
              position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
-  geom_point(data = env_plot %>%
+  geom_point(data = dat %>%
                filter(microsite == "Away"),
              aes(x = 0.8,
                  y = value),
@@ -130,16 +118,32 @@ ggplot(env_plot,
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   scale_colour_manual(values = c('goldenrod1','forestgreen'),
                       name = "Microsite") +
-  labs(y = "Value") +
+  labs(y = "Value",
+       x = NULL) +
   theme_classic() +
   theme(
-    axis.text.x = element_markdown(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
     plot.caption = element_markdown(),
     legend.position = 'bottom'
   )
+  
+}
+
+plots[[1]] + 
+  labs(tag = "A") + 
+plots[[2]] + 
+  labs(tag = "B") + 
+plots[[3]] + 
+  labs(tag = "C") +
+  plot_layout(ncol = 1,
+  guides = 'collect') +
+  plot_annotation(theme = theme(
+    legend.position = 'bottom'))
+
 
 ggsave("figures/microclimate_boxplot.png",
-       width = 13,
-       height = 8)
+       width = 7,
+       height = 12)
 
 
