@@ -1,7 +1,8 @@
 ####Libraries####
-library(tidyverse)
 library(ggforce)
 library(ggtext)
+library(patchwork)
+library(tidyverse)
 library(vegan)
 
 set.seed(66)
@@ -31,12 +32,11 @@ COMMarray <- na.omit(COMMarray)
 FTarray = read.table("data/FT.txt", header = T, row.names = 1) %>% 
   select(Plot, Species, Habitat, Chlorophyll, Toughness, PHeight, SLA, LDMC) %>%
   mutate(Habitat = case_when(Habitat == "Under" ~ "Under",
-                             TRUE ~ "Away"))    
+                             TRUE ~ "Away"),
+         Species = case_when(Species == "Pseudognath" ~ "Pseudognaphalium",
+                             TRUE ~ Species))    
 #remove NA
 FTarray <- na.omit(FTarray)
-
-titre <- c(Chlorophyll = "Chlorophyll~(mg/m^2)", PHeight = "Plant~height~(m)", SLA = "SLA~(cm^2%.%g)",
-           LDMC = "LDMC", Toughness = "Toughness~(N)")[colnames(dat)]
 
 ####Analysis - Community####
 
@@ -49,7 +49,7 @@ comm_sp_nmds <- as.data.frame(comm_mds$species) %>%
   left_join(.,
             growth_forms)  %>% 
   right_join(.,
-            spp_fidelity) %>% 
+             spp_fidelity) %>% 
   filter(cover > 0)
 
 comm_site_nmds <- as.data.frame(comm_mds$points) %>% 
@@ -117,6 +117,9 @@ y = signy * PCA$li[, 'Axis2']
 Axis1 <- signx * PCA$li[, 'Axis1']
 Axis2 <- signy * PCA$li[, 'Axis2']
 
+titre <- c(Chlorophyll = "Chlorophyll~(mg/m^2)", PHeight = "Plant~height~(m)", SLA = "SLA~(cm^2%.%g)",
+           LDMC = "LDMC", Toughness = "Toughness~(N)")[colnames(dat)]
+
 mult <- 4
 arrows_all = tibble(
   Trait = titre, 
@@ -125,16 +128,28 @@ arrows_all = tibble(
   x = rep(0, length(titre)),
   y = rep(0, length(titre)))
 
-####Plot####
+ft_spp_colours = tibble(
+  species = c("Commelina", "Helichrysum","Miscanthus", "Oxalis",
+              "Pseudognaphalium", "Themeda", "Tristachya"),
+  colour = c('#003C2F','#01665E', '#543006', '#369890',
+             '#7FCEC2', '#BF822E',  '#8D5108'),
+  fgroup = c("Forb", "Forb", "Grass", "Forb",
+             "Forb", "Grass", "Grass")
+)
 
 plot_data_all = tibble(Axis1 = x, 
                        Axis2 = y,
                        Species = Blob_sp,
-                       Microsite = Blob_microsite)
+                       Microsite = Blob_microsite,
+                       fgroup = ifelse(Blob_sp %in% c("Miscanthus", "Themeda", "Tristachya"),
+                                       "Grass",
+                                       "Forb"))
+
+####Plot####
 
 ggplot(plot_data_all,
-       aes(x = Axis1,
-           y = Axis2)) +
+         aes(x = Axis1,
+             y = Axis2)) +
   scale_alpha(range = c(0.3, 0.7)) +
   geom_point(size = 0.2,
              alpha = 0.6,
@@ -167,19 +182,16 @@ ggplot(plot_data_all,
                    parse = TRUE, 
                    size = 2,
                    check_overlap = FALSE) +
-  scale_fill_manual(values = c('#003C2F','#01665E','#543006','#369890',
-                               '#7FCEC2','#8D5108','#BF822E')) +
-  scale_colour_manual(values = c('#003C2F','#01665E','#543006','#369890',
-                                 '#7FCEC2','#8D5108','#BF822E')) +
+  scale_fill_manual(values = ft_spp_colours$colour,
+                    aesthetics = c("colour", "fill")) +
   theme_classic() +
   theme(legend.position = 'bottom',
         plot.title = element_text(size = 20)) +
   xlim(-5,5) +
   ylim(-5,5) +
   labs(x = "PC1",
-       y = "PC2") +
-  theme(legend.position = 'bottom')
+       y = "PC2")
 
 ggsave("figures/FT_pca.png",
        width = 11,
-       height = 7)
+       height = 8)
