@@ -158,7 +158,7 @@ ggplot(plot_data_all,
                   aes(fill = Species,
                       alpha = ..nlevel..),
                   contour_var = "ndensity",
-                  breaks = c(0.5, 0.9))+
+                  breaks = c(0.5, 0.95))+
   stat_density_2d(geom = "polygon",
                   aes(colour = Species),
                   contour_var = "ndensity",
