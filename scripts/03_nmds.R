@@ -13,10 +13,10 @@ source("scripts/_internals.R")
 ####Import data####
 
 # array for species community
-COMMarray <- read.table("data/spp_richness.txt", header=T, row.names = 1) %>%
+COMMarray <- read.table("data/spp_richness.txt", header = T, row.names = 1) %>%
   #remove unneeded cols
   select(-c(Site, Dead)) %>% 
-  # remove problem site
+  # remove problem (outlier) site
   filter(!row.names(.) %in% "A11C") %>% 
   # get microsite from ID
   mutate(Habitat = str_extract(row.names(.), ".{1}$")) %>%
@@ -29,18 +29,18 @@ COMMarray <- read.table("data/spp_richness.txt", header=T, row.names = 1) %>%
 COMMarray <- na.omit(COMMarray)
 
 # array for traits
-FTarray = read.table("data/FT.txt", header = T, row.names = 1) %>% 
+FTarray = read.table("data/FT.txt", header = T, row.names = 1) %>%
   select(Plot, Species, Habitat, Chlorophyll, Toughness, PHeight, SLA, LDMC) %>%
   mutate(Habitat = case_when(Habitat == "Under" ~ "Under",
                              TRUE ~ "Away"),
          Species = case_when(Species == "Pseudognath" ~ "Pseudognaphalium",
-                             TRUE ~ Species))    
+                             TRUE ~ Species))
 #remove NA
 FTarray <- na.omit(FTarray)
 
 ####Analysis - Community####
 
-comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], distance = "bray") 
+comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], distance = "bray")
 
 ####Plot####
 
@@ -52,8 +52,9 @@ comm_sp_nmds <- as.data.frame(comm_mds$species) %>%
              spp_fidelity) %>% 
   filter(cover > 0)
 
-comm_site_nmds <- as.data.frame(comm_mds$points) %>% 
-  mutate(Microsite = COMMarray$Habitat) 
+comm_site_nmds <- as.data.frame(comm_mds$points) %>%
+  mutate(Microsite = COMMarray$Habitat,
+         Site = str_extract(row.names(.), "^.{1}"))
 
 ggplot(comm_site_nmds,
        aes(x = MDS1,
@@ -98,6 +99,19 @@ ggsave("figures/community_pca.png",
        width = 11,
        height = 7)
 
+####PERMANOVA####
+
+permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
+                          data = comm_site_nmds, perm = 999)
+
+write.csv(permanova_all,
+          "outputs/permanova_all.csv")
+
+permanova_grass <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
+                           data = comm_site_nmds, perm = 999)
+
+write.csv(permanova_grass,
+          "outputs/permanova_grass.csv")
 
 ####Analysis - Functional traits####
 
