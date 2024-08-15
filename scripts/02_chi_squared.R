@@ -14,7 +14,7 @@ spp <- read.table("data/spp_richness.txt",
   summarise(across(Ajuga_ophrydis:Tristachya_leucothrix, 
                    ~ sum(.x))) %>%
   ungroup()
-  
+
 # filter out the low abundance species (i.e. not occurring in more than 27 plots)
 spp <- spp[,-1][colSums(spp[,-1]) > 26] %>%
   mutate(microsite = c("away", "under")) %>%
@@ -35,7 +35,7 @@ Results <- matrix(data = NA, ncol = 4, nrow = dim(dat)[1])
 colnames(Results) <- c("Spp", "Chi2", "df", "p")
 
 #loop for chi test
-for (i in 1: dim(dat)[1]) {
+for (i in seq_len(nrow(dat))) {
   temp.tab <- t(structure(array(as.numeric(dat[i, c(1:4)])), dim = c(2, 2)))
   colnames(temp.tab) <- c("Control", "Under")
   rownames(temp.tab) <- c("Present", "Absent")
