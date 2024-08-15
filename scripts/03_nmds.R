@@ -107,12 +107,6 @@ permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
 write.csv(permanova_all,
           "outputs/permanova_all.csv")
 
-permanova_grass <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
-                           data = comm_site_nmds, perm = 999)
-
-write.csv(permanova_grass,
-          "outputs/permanova_grass.csv")
-
 ####Analysis - Functional traits####
 
 dat = FTarray[4:ncol(FTarray)]
