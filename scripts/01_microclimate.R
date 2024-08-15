@@ -1,4 +1,5 @@
 ####Libraries####
+library(car)
 library(lme4)
 library(MuMIn)
 library(patchwork)
@@ -43,18 +44,20 @@ model_results = data.frame(variable = vars,
                            micrositeU_stderror = NA,
                            micrositeU_tval = NA,
                            R_marginal = NA,
-                           R_conditional = NA)
+                           R_conditional = NA,
+                           p_val = NA)
 
 for (i in 1:length(vars)) {
-  
+
   dat <- env %>%
     filter(variable == vars[i])
-  
+
   # model
   lmm <- lmer(formula = value ~ microsite + (1 | Site), 
               dat)
   summ = summary(lmm)$coefficients
-  
+  annova = Anova(lmm)
+
   # extract relevant summary stats
   model_results[i, 2] <- summ[1,1]
   model_results[i, 3] <- summ[1,2]
@@ -64,11 +67,12 @@ for (i in 1:length(vars)) {
   model_results[i, 7] <- summ[2,3]
   model_results[i, 8] <- r.squaredGLMM(lmm)[1]
   model_results[i, 9] <- r.squaredGLMM(lmm)[2]
+  model_results[i, 10] <- annova[,3]
   
 }
 
 write.csv(model_results,
-          "outputs/mixed_effect.csv")
+          "outputs/mixed_effect_community.csv")
 
 # plot pairwise data
 
@@ -92,9 +96,20 @@ grp_vars[[1]] <- c("Temperature (C)", "Soil temperature (C)", "Soil moisture")
 grp_vars[[3]] <- c("All species cover (%)", "Forb cover (%)", "Grass cover (%)")
 grp_vars[[2]] <- c("All species richness", "Forb species richness", "Grass species richness")
 
+# stars (*) for sig diffs)
+starstruck <- data.frame(variable = env_plot %>% distinct(variable),
+                         p_val = model_results$p_val) %>%
+  full_join(env_plot %>%
+              group_by(variable) %>%
+              reframe(maxy = max(value))) %>%
+  filter(p_val < 0.05)
+
 for (i in 1:length(plots)) {
   
   dat <- env_plot %>% 
+          filter(variable %in% grp_vars[[i]])
+
+  starstruck_temp <- starstruck %>% 
           filter(variable %in% grp_vars[[i]])
   
   plots[[i]] <- ggplot(dat,
@@ -121,6 +136,11 @@ for (i in 1:length(plots)) {
   geom_boxplot(aes(colour = microsite),
                outliers = FALSE,
                fill = NA) +
+  geom_point(data = starstruck_temp,
+             aes(x = 1,
+                 y = maxy),
+             shape = 8,
+             size = 4) +
   facet_wrap(vars(variable),
              scales = "free") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
@@ -153,5 +173,3 @@ plots[[3]] +
 ggsave("figures/microclimate_boxplot.png",
        width = 7,
        height = 12)
-
-
