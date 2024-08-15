@@ -78,9 +78,9 @@ write.csv(model_results,
 
 env_plot <- 
   env %>%
-  mutate(variable = case_when(variable == 'Temp' ~ "Temperature (C)",
-                              variable == 'STemp' ~ "Soil temperature (C)",
-                              variable == 'SMoist' ~ "Soil moisture",
+  mutate(variable = case_when(variable == 'Temp' ~ "Temperature (°C)",
+                              variable == 'STemp' ~ "Soil temperature (°C)",
+                              variable == 'SMoist' ~ "Soil moisture (VWC %)",
                               variable == 'cover_forb_' ~ "Forb cover (%)",
                               variable == 'cover_grass_' ~ "Grass cover (%)",
                               variable == 'richness_forb_' ~ "Forb species richness",
@@ -92,7 +92,7 @@ env_plot <-
 
 plots <- vector('list', 3)
 grp_vars <- vector('list', 3)
-grp_vars[[1]] <- c("Temperature (C)", "Soil temperature (C)", "Soil moisture")
+grp_vars[[1]] <- c("Temperature (°C)", "Soil temperature (°C)", "Soil moisture (VWC %)")
 grp_vars[[3]] <- c("All species cover (%)", "Forb cover (%)", "Grass cover (%)")
 grp_vars[[2]] <- c("All species richness", "Forb species richness", "Grass species richness")
 
