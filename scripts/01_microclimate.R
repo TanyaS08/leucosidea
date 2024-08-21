@@ -1,5 +1,7 @@
 ####Libraries####
 library(car)
+library(ggforce)
+library(ggtext)
 library(lme4)
 library(MuMIn)
 library(patchwork)
@@ -10,8 +12,12 @@ source("scripts/_internals.R")
 ####Import data####
 env <- read.table("data/microclimate.txt", 
                   header = T) %>%
+  # average the two nearest neighbours as a proxy for 'stand density'
+  mutate(density = (nn1 + nn2)/2) %>% 
+  # move density column
+  relocate(density, .after = ContHei) %>% 
   # remove some columns
-  dplyr::select(!c(Wpt, Alt, TimeH, nn1, nn2, TempA, CovU, CovC, RichU, RichC)) %>%
+  dplyr::select(!c(Wpt, TimeH, nn1, nn2, nna, TempA, CovU, CovC, RichU, RichC)) %>%
   left_join(.,
             fg_cover,
             by = c("Site" = "Site", "Pair" = "Pair")) %>% 
@@ -173,3 +179,31 @@ plots[[3]] +
 ggsave("figures/microclimate_boxplot.png",
        width = 7,
        height = 12)
+
+####'full' Mixed effect models####
+
+# this is just to see if a full model is going to have an impact on R2 vals
+
+# create empty data frame
+model_results = data.frame(variable = vars, 
+                           R_marginal = NA,
+                           R_conditional = NA)
+
+for (i in 1:length(vars)) {
+
+  dat <- env %>%
+    filter(variable == vars[i])
+
+  # model
+  lmm <- lmer(formula = value ~ microsite + Alt + TrHei + Circ +
+              LeuCov + density + (1 | Site),
+              dat)
+
+  # extract R2 vals
+  model_results[i, 2] <- r.squaredGLMM(lmm)[1]
+  model_results[i, 3] <- r.squaredGLMM(lmm)[2]
+  
+}
+
+write.csv(model_results,
+          "outputs/full_mixed_effect_community.csv")
