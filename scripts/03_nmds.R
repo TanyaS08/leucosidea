@@ -16,8 +16,6 @@ source("scripts/_internals.R")
 COMMarray <- read.table("data/spp_richness.txt", header = T, row.names = 1) %>%
   #remove unneeded cols
   select(-c(Site, Dead)) %>% 
-  # remove problem (outlier) site
-  filter(!row.names(.) %in% "A11C") %>% 
   # get microsite from ID
   mutate(Habitat = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
@@ -40,7 +38,10 @@ FTarray <- na.omit(FTarray)
 
 ####Analysis - Community####
 
-comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], distance = "bray")
+comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)] %>% 
+                      # remove problem (outlier) site
+                      filter(!row.names(.) %in% "A11C"), 
+                    distance = "bray")
 
 ####Plot####
 
