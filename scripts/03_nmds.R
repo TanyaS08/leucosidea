@@ -107,6 +107,159 @@ permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
 write.csv(permanova_all,
           "outputs/permanova_all.csv")
 
+####Analysis - Forbs/Grasses####
+
+FORBarray <-
+  COMMarray %>% 
+  # remove problem (outlier) site
+  filter(!row.names(.) %in% c("C4C","C11U")) %>%
+  select(c(growth_forms %>%
+          filter(growth_form == "forb") %>%
+          filter(species != 'Dead') %>%
+          pull(species))) %>%
+  select(-c(Rubus_ludwigii)) %>%
+  filter(rowSums(across(where(is.numeric)))!= 0)
+
+forb_mds <- metaMDS(FORBarray,
+                    distance = "bray")
+
+####Plot####
+
+forb_sp_nmds <- as.data.frame(forb_mds$species) %>%
+  mutate(species = row.names(.)) %>%
+  left_join(.,
+            growth_forms)  %>%
+  left_join(.,
+             spp_fidelity) %>%
+  filter(cover > 0)
+
+forb_site_nmds <- as.data.frame(forb_mds$points) %>%
+  mutate(Site = str_extract(row.names(.), "^.{1}")) %>% 
+  # get microsite from ID
+  mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
+  # standardise naming
+  mutate(Microsite = case_when(Microsite == "U" ~ "Under",
+                             TRUE ~ "Away"))
+
+forb_nmds_plot <-
+  ggplot(forb_site_nmds,
+          aes(x = MDS1,
+              y = MDS2)) +
+  scale_alpha(range = c(0.3, 0.7)) +
+  geom_point(size = 0.8,
+             alpha = 0.6,
+             colour = "grey50") +
+  stat_density_2d(data = forb_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      fill = Microsite,
+                      alpha = after_stat(nlevel)),
+                  contour_var = "ndensity",
+                  breaks = c(0.5, 0.9)) +
+  stat_density_2d(data = forb_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      colour = Microsite),
+                  contour_var = "ndensity",
+                  fill = NA,
+                  breaks = c(0.5)) +
+  guides(alpha = FALSE,
+         fill = NULL) +
+  scale_fill_manual(values = c('#01665E', '#BF822E'),
+                    name = "Microsite",
+                    aesthetics = c("colour", "fill")) +
+  theme_classic() +
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size = 20)) +
+  labs(x = "MDS1",
+       y = "MDS2",
+       caption = paste0( "Stress = ", round(forb_mds$stress*100, digits = 2), "%"))
+
+# grasses
+
+GRASSarray <-
+  COMMarray %>% 
+  # remove problem (outlier) site
+  filter(!row.names(.) %in% c("C4C","C11U","A10C","A11C")) %>%
+  select(c(growth_forms %>%
+          filter(growth_form == "grass") %>%
+          pull(species))) %>%
+  filter(rowSums(across(where(is.numeric)))!= 0)
+
+grass_mds <- metaMDS(GRASSarray,
+                    distance = "bray")
+
+####Plot####
+
+grass_sp_nmds <- as.data.frame(grass_mds$species) %>%
+  mutate(species = row.names(.)) %>%
+  left_join(.,
+            growth_forms)  %>%
+  left_join(.,
+             spp_fidelity) %>%
+  filter(cover > 0)
+
+grass_site_nmds <- as.data.frame(grass_mds$points) %>%
+  mutate(Site = str_extract(row.names(.), "^.{1}")) %>% 
+  # get microsite from ID
+  mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
+  # standardise naming
+  mutate(Microsite = case_when(Microsite == "U" ~ "Under",
+                             TRUE ~ "Away"))
+
+grass_nmds_plot <-
+  ggplot(grass_site_nmds,
+          aes(x = MDS1,
+              y = MDS2)) +
+  scale_alpha(range = c(0.3, 0.7)) +
+  geom_point(size = 0.8,
+             alpha = 0.6,
+             colour = "grey50") +
+  stat_density_2d(data = grass_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      fill = Microsite,
+                      alpha = after_stat(nlevel)),
+                  contour_var = "ndensity",
+                  breaks = c(0.5, 0.9)) +
+  stat_density_2d(data = grass_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      colour = Microsite),
+                  contour_var = "ndensity",
+                  fill = NA,
+                  breaks = c(0.5)) +
+  guides(alpha = FALSE,
+         fill = NULL) +
+  scale_fill_manual(values = c('#01665E', '#BF822E'),
+                    name = "Microsite",
+                    aesthetics = c("colour", "fill")) +
+  xlim(-0.3,0.3) +
+  ylim(-0.3,0.3) +
+  theme_classic() +
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size = 20)) +
+  labs(x = "MDS1",
+       y = "MDS2",
+       caption = paste0( "Stress = ", round(grass_mds$stress*100, digits = 2), "%"))
+
+forb_nmds_plot + 
+  labs(tag = "A") + 
+grass_nmds_plot + 
+  labs(tag = "B") +
+  plot_layout(ncol = 1,
+  guides = 'collect') +
+  plot_annotation(theme = theme(
+    legend.position = 'bottom'))
+
+ggsave("figures/forb_grass_pca.png",
+       width = 11,
+       height = 14)
+
 ####Analysis - Functional traits####
 
 ft_mds <- metaMDS(FTarray[4:ncol(FTarray)], distance = "bray")
