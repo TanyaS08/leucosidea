@@ -113,12 +113,12 @@ write.csv(permanova_all,
 FORBarray <-
   COMMarray %>% 
   # remove problem (outlier) site
-  filter(!row.names(.) %in% c("C4C","C11U")) %>%
+  filter(!row.names(.) %in% c("C4C", "C11U")) %>%
   select(c(growth_forms %>%
           filter(growth_form == "forb") %>%
           filter(species != 'Dead') %>%
           pull(species))) %>%
-  select(-c(Rubus_ludwigii)) %>%
+  # remove plots were there are no forbs
   filter(rowSums(across(where(is.numeric)))!= 0)
 
 forb_mds <- metaMDS(FORBarray,
@@ -187,6 +187,7 @@ GRASSarray <-
   select(c(growth_forms %>%
           filter(growth_form == "grass") %>%
           pull(species))) %>%
+  # remove plots were there are no grasses
   filter(rowSums(across(where(is.numeric)))!= 0)
 
 grass_mds <- metaMDS(GRASSarray,
