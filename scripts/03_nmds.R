@@ -119,7 +119,7 @@ FORBarray <-
           filter(species != 'Dead') %>%
           pull(species))) %>%
   # remove plots were there are no forbs
-  filter(rowSums(across(where(is.numeric)))!= 0)
+  filter(rowSums(across(where(is.numeric))) != 0)
 
 forb_mds <- metaMDS(FORBarray,
                     distance = "bray")
