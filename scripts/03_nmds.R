@@ -170,7 +170,7 @@ forb_nmds_plot <-
                   breaks = c(0.5)) +
   guides(alpha = "none",
          fill = NULL) +
-  scale_fill_manual(values = c('#01665E', '#BF822E'),
+  scale_fill_manual(values = c('goldenrod1', 'forestgreen'),
                     name = "Microsite",
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
@@ -240,7 +240,7 @@ grass_nmds_plot <-
                   breaks = c(0.5)) +
   guides(alpha = "none",
          fill = NULL) +
-  scale_fill_manual(values = c('#01665E', '#BF822E'),
+  scale_fill_manual(values = c('goldenrod1', 'forestgreen'),
                     name = "Microsite",
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
