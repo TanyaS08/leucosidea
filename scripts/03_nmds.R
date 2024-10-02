@@ -123,11 +123,11 @@ FORBarray <-
   # remove plots were there are no forbs
   filter(rowSums(across(where(is.numeric))) != 0)
 
+# NMDS
 forb_mds <- metaMDS(FORBarray,
                     distance = "bray")
 
-####Plot####
-
+# some tidy datasets
 forb_sp_nmds <- as.data.frame(forb_mds$species) %>%
   mutate(species = row.names(.)) %>%
   left_join(.,
@@ -143,6 +143,16 @@ forb_site_nmds <- as.data.frame(forb_mds$points) %>%
   # standardise naming
   mutate(Microsite = case_when(Microsite == "U" ~ "Under",
                                TRUE ~ "Away"))
+
+# PERMANOVA - forb
+
+permanova_forb <- adonis2(FORBarray ~ Site*Microsite,
+                          data = forb_site_nmds, perm = 999)
+
+write.csv(permanova_forb,
+          "outputs/permanova_forb.csv")
+
+# Plot
 
 forb_nmds_plot <-
   ggplot(forb_site_nmds,
@@ -213,6 +223,14 @@ grass_site_nmds <- as.data.frame(grass_mds$points) %>%
   # standardise naming
   mutate(Microsite = case_when(Microsite == "U" ~ "Under",
                                TRUE ~ "Away"))
+
+#PERMANOVA - grass
+
+permanova_grass <- adonis2(GRASSarray ~ Site*Microsite,
+                          data = grass_site_nmds, perm = 999)
+
+write.csv(permanova_grass,
+          "outputs/permanova_grass.csv")
 
 grass_nmds_plot <-
   ggplot(grass_site_nmds,
