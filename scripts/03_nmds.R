@@ -113,7 +113,9 @@ write.csv(permanova_all,
 FORBarray <-
   COMMarray %>% 
   # remove problem (outlier) site
-  filter(!row.names(.) %in% c("C4C", "C11U")) %>%
+  filter(!row.names(.) %in% c("A1U", "A11C", "I13C", "A5C", 
+                              "A15C", "G13C", "C5U", "G4U",
+                              "B1C", "H4U")) %>%
   select(c(growth_forms %>%
           filter(growth_form == "forb") %>%
           filter(species != 'Dead') %>%
@@ -166,7 +168,7 @@ forb_nmds_plot <-
                   contour_var = "ndensity",
                   fill = NA,
                   breaks = c(0.5)) +
-  guides(alpha = FALSE,
+  guides(alpha = "none",
          fill = NULL) +
   scale_fill_manual(values = c('#01665E', '#BF822E'),
                     name = "Microsite",
@@ -183,7 +185,8 @@ forb_nmds_plot <-
 GRASSarray <-
   COMMarray %>% 
   # remove problem (outlier) site
-  filter(!row.names(.) %in% c("C4C","C11U","A10C","A11C")) %>%
+  filter(!row.names(.) %in% c("C4C", "C7C","C11U","A10C",
+                              "A11C")) %>%
   select(c(growth_forms %>%
           filter(growth_form == "grass") %>%
           pull(species))) %>%
@@ -235,13 +238,11 @@ grass_nmds_plot <-
                   contour_var = "ndensity",
                   fill = NA,
                   breaks = c(0.5)) +
-  guides(alpha = FALSE,
+  guides(alpha = "none",
          fill = NULL) +
   scale_fill_manual(values = c('#01665E', '#BF822E'),
                     name = "Microsite",
                     aesthetics = c("colour", "fill")) +
-  xlim(-0.3,0.3) +
-  ylim(-0.3,0.3) +
   theme_classic() +
   theme(legend.position = 'bottom',
         plot.title = element_text(size = 20)) +
