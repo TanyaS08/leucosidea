@@ -103,7 +103,7 @@ ggsave("figures/community_pca.png",
 ####PERMANOVA####
 
 permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
-                          data = comm_site_nmds, perm = 999)
+                         data = comm_site_nmds, perm = 999)
 
 write.csv(permanova_all,
           "outputs/permanova_all.csv")
@@ -117,9 +117,9 @@ FORBarray <-
                               "A15C", "G13C", "C5U", "G4U",
                               "B1C", "H4U")) %>%
   select(c(growth_forms %>%
-          filter(growth_form == "forb") %>%
-          filter(species != 'Dead') %>%
-          pull(species))) %>%
+             filter(growth_form == "forb") %>%
+             filter(species != 'Dead') %>%
+             pull(species))) %>%
   # remove plots were there are no forbs
   filter(rowSums(across(where(is.numeric))) != 0)
 
@@ -133,7 +133,7 @@ forb_sp_nmds <- as.data.frame(forb_mds$species) %>%
   left_join(.,
             growth_forms)  %>%
   left_join(.,
-             spp_fidelity) %>%
+            spp_fidelity) %>%
   filter(cover > 0)
 
 forb_site_nmds <- as.data.frame(forb_mds$points) %>%
@@ -142,12 +142,12 @@ forb_site_nmds <- as.data.frame(forb_mds$points) %>%
   mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
   mutate(Microsite = case_when(Microsite == "U" ~ "Under",
-                             TRUE ~ "Away"))
+                               TRUE ~ "Away"))
 
 forb_nmds_plot <-
   ggplot(forb_site_nmds,
-          aes(x = MDS1,
-              y = MDS2)) +
+         aes(x = MDS1,
+             y = MDS2)) +
   scale_alpha(range = c(0.3, 0.7)) +
   geom_point(size = 0.8,
              alpha = 0.6,
@@ -188,13 +188,13 @@ GRASSarray <-
   filter(!row.names(.) %in% c("C4C", "C7C","C11U","A10C",
                               "A11C")) %>%
   select(c(growth_forms %>%
-          filter(growth_form == "grass") %>%
-          pull(species))) %>%
+             filter(growth_form == "grass") %>%
+             pull(species))) %>%
   # remove plots were there are no grasses
   filter(rowSums(across(where(is.numeric)))!= 0)
 
 grass_mds <- metaMDS(GRASSarray,
-                    distance = "bray")
+                     distance = "bray")
 
 ####Plot####
 
@@ -203,7 +203,7 @@ grass_sp_nmds <- as.data.frame(grass_mds$species) %>%
   left_join(.,
             growth_forms)  %>%
   left_join(.,
-             spp_fidelity) %>%
+            spp_fidelity) %>%
   filter(cover > 0)
 
 grass_site_nmds <- as.data.frame(grass_mds$points) %>%
@@ -212,12 +212,12 @@ grass_site_nmds <- as.data.frame(grass_mds$points) %>%
   mutate(Microsite = str_extract(row.names(.), ".{1}$")) %>%
   # standardise naming
   mutate(Microsite = case_when(Microsite == "U" ~ "Under",
-                             TRUE ~ "Away"))
+                               TRUE ~ "Away"))
 
 grass_nmds_plot <-
   ggplot(grass_site_nmds,
-          aes(x = MDS1,
-              y = MDS2)) +
+         aes(x = MDS1,
+             y = MDS2)) +
   scale_alpha(range = c(0.3, 0.7)) +
   geom_point(size = 0.8,
              alpha = 0.6,
@@ -252,10 +252,10 @@ grass_nmds_plot <-
 
 forb_nmds_plot + 
   labs(tag = "A") + 
-grass_nmds_plot + 
+  grass_nmds_plot + 
   labs(tag = "B") +
   plot_layout(ncol = 1,
-  guides = 'collect') +
+              guides = 'collect') +
   plot_annotation(theme = theme(
     legend.position = 'bottom'))
 
