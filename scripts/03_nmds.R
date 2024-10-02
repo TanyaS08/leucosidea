@@ -206,8 +206,6 @@ GRASSarray <-
 grass_mds <- metaMDS(GRASSarray,
                      distance = "bray")
 
-####Plot####
-
 grass_sp_nmds <- as.data.frame(grass_mds$species) %>%
   mutate(species = row.names(.)) %>%
   left_join(.,
@@ -231,6 +229,8 @@ permanova_grass <- adonis2(GRASSarray ~ Site*Microsite,
 
 write.csv(permanova_grass,
           "outputs/permanova_grass.csv")
+
+####Plot####
 
 grass_nmds_plot <-
   ggplot(grass_site_nmds,
@@ -278,8 +278,8 @@ forb_nmds_plot +
     legend.position = 'bottom'))
 
 ggsave("figures/forb_grass_pca.png",
-       width = 11,
-       height = 14)
+       width = 9,
+       height = 12)
 
 ####Analysis - Functional traits####
 
