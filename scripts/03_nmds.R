@@ -304,6 +304,14 @@ ft_spp_colours = tibble(
              "Forb", "Grass", "Grass")
 )
 
+# PERMANOVA - ft
+
+permanova_ft <- adonis2(FTarray[4:ncol(FTarray)] ~ species + Site*Microsite,
+                        data = ft_species_nmds, perm = 999)
+
+write.csv(permanova_ft,
+          "outputs/permanova_ft.csv")
+
 ####Plot####
 
 ggplot(ft_species_nmds,
