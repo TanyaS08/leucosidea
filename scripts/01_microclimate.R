@@ -9,9 +9,13 @@ library(tidyverse)
 
 source("scripts/_internals.R")
 
+set.seed(66)
+
 ####Import data####
-env <- read.table("data/microclimate.txt", 
-                  header = T) %>%
+env <- left_join(read.table("data/leucosidea_metadata.txt",
+                            header = TRUE),
+                 read.table("data/microclimate.txt", 
+                            header = TRUE)) %>%
   # average the two nearest neighbours as a proxy for 'stand density'
   mutate(density = (nn1 + nn2)/2) %>% 
   # move density column
@@ -54,16 +58,16 @@ model_results = data.frame(variable = vars,
                            p_val = NA)
 
 for (i in 1:length(vars)) {
-
+  
   dat <- env %>%
     filter(variable == vars[i])
-
+  
   # model
   lmm <- lmer(formula = value ~ microsite + (1 | Site), 
               dat)
   summ = summary(lmm)$coefficients
   annova = Anova(lmm)
-
+  
   # extract relevant summary stats
   model_results[i, 2] <- summ[1,1]
   model_results[i, 3] <- summ[1,2]
@@ -113,65 +117,65 @@ starstruck <- data.frame(variable = env_plot %>% distinct(variable),
 for (i in 1:length(plots)) {
   
   dat <- env_plot %>% 
-          filter(variable %in% grp_vars[[i]])
-
+    filter(variable %in% grp_vars[[i]])
+  
   starstruck_temp <- starstruck %>% 
-          filter(variable %in% grp_vars[[i]])
+    filter(variable %in% grp_vars[[i]])
   
   plots[[i]] <- ggplot(dat,
-       aes(x = variable,
-           y = value)) +
-  geom_point(data = dat %>%
-               filter(microsite == "Under"),
-             aes(x = 1.2,
-                 y = value),
-             alpha = 0.3,
-             fill = 'forestgreen',
-             colour = "white",
-             shape = 21,
-             position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
-  geom_point(data = dat %>%
-               filter(microsite == "Away"),
-             aes(x = 0.8,
-                 y = value),
-             alpha = 0.3,
-             fill = 'goldenrod1',
-             colour = "white",
-             shape = 21,
-             position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
-  geom_boxplot(aes(colour = microsite),
-               outliers = FALSE,
-               fill = NA) +
-  geom_point(data = starstruck_temp,
-             aes(x = 1,
-                 y = maxy),
-             shape = 8,
-             size = 4) +
-  facet_wrap(vars(variable),
-             scales = "free") +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  scale_colour_manual(values = c('goldenrod1','forestgreen'),
-                      name = "Microsite") +
-  labs(y = "Value",
-       x = NULL) +
-  theme_classic() +
-  theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    plot.caption = element_markdown(),
-    legend.position = 'bottom'
-  )
+                       aes(x = variable,
+                           y = value)) +
+    geom_point(data = dat %>%
+                 filter(microsite == "Under"),
+               aes(x = 1.2,
+                   y = value),
+               alpha = 0.3,
+               fill = 'forestgreen',
+               colour = "white",
+               shape = 21,
+               position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
+    geom_point(data = dat %>%
+                 filter(microsite == "Away"),
+               aes(x = 0.8,
+                   y = value),
+               alpha = 0.3,
+               fill = 'goldenrod1',
+               colour = "white",
+               shape = 21,
+               position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
+    geom_boxplot(aes(colour = microsite),
+                 outliers = FALSE,
+                 fill = NA) +
+    geom_point(data = starstruck_temp,
+               aes(x = 1,
+                   y = maxy),
+               shape = 8,
+               size = 4) +
+    facet_wrap(vars(variable),
+               scales = "free") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+    scale_colour_manual(values = c('goldenrod1','forestgreen'),
+                        name = "Microsite") +
+    labs(y = "Value",
+         x = NULL) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      plot.caption = element_markdown(),
+      legend.position = 'bottom'
+    )
   
 }
 
 plots[[1]] + 
   labs(tag = "A") + 
-plots[[2]] + 
+  plots[[2]] + 
   labs(tag = "B") + 
-plots[[3]] + 
+  plots[[3]] + 
   labs(tag = "C") +
   plot_layout(ncol = 1,
-  guides = 'collect') +
+              guides = 'collect') +
   plot_annotation(theme = theme(
     legend.position = 'bottom'))
 
@@ -190,15 +194,15 @@ model_results = data.frame(variable = vars,
                            R_conditional = NA)
 
 for (i in 1:length(vars)) {
-
+  
   dat <- env %>%
     filter(variable == vars[i])
-
+  
   # model
   lmm <- lmer(formula = value ~ microsite + Alt + TrHei + Circ +
-              LeuCov + density + (1 | Site),
+                LeuCov + density + (1 | Site),
               dat)
-
+  
   # extract R2 vals
   model_results[i, 2] <- r.squaredGLMM(lmm)[1]
   model_results[i, 3] <- r.squaredGLMM(lmm)[2]
