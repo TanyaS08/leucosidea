@@ -24,23 +24,29 @@ COMMarray <- read.table("data/spp_richness.txt", header = T, row.names = 1) %>%
   # reorder
   select(Habitat, everything())
 #remove NA
-COMMarray <- na.omit(COMMarray)
+COMMarray <- na.omit(COMMarray) %>% 
+  # remove problem (outlier) site
+  filter(!row.names(.) %in% "A11C")
 
 # array for traits
 FTarray = read.table("data/FT.txt", header = T, row.names = 1) %>%
   select(Plot, Species, Habitat, Chlorophyll, Toughness, PHeight, SLA, LDMC) %>%
   mutate(Habitat = case_when(Habitat == "Under" ~ "Under",
                              TRUE ~ "Away"),
-         Species = case_when(Species == "Pseudognath" ~ "Pseudognaphalium",
+         Species = case_when(Species == "Pseudognath" ~ "<i>P. luteo-album</i>",
+                             Species == "Oxalis" ~ "<i>O. obliquifolia</i>",
+                             Species == "Helichrysum" ~ "<i>H. odoratissimum</i>",
+                             Species == "Commelina" ~ "<i>C. africana</i>",
+                             Species == "Miscanthus" ~ "<i>M. capensis</i>",
+                             Species == "Themeda" ~ "<i>T. triandra</i>",
+                             Species == "Tristachya" ~ "<i>T. leucothrix</i>",
                              TRUE ~ Species))
 #remove NA
 FTarray <- na.omit(FTarray)
 
 ####Analysis - Community####
 
-comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)] %>% 
-                      # remove problem (outlier) site
-                      filter(!row.names(.) %in% "A11C"), 
+comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], 
                     distance = "bray")
 
 ####Plot####
@@ -103,7 +109,7 @@ ggsave("figures/community_pca.png",
 ####PERMANOVA####
 
 permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
-                         data = comm_site_nmds, perm = 999)
+                         data = comm_site_nmds, perm = 999, by = "terms")
 
 write.csv(permanova_all,
           "outputs/permanova_all.csv")
@@ -147,7 +153,7 @@ forb_site_nmds <- as.data.frame(forb_mds$points) %>%
 # PERMANOVA - forb
 
 permanova_forb <- adonis2(FORBarray ~ Site*Microsite,
-                          data = forb_site_nmds, perm = 999)
+                          data = forb_site_nmds, perm = 999, by = "terms")
 
 write.csv(permanova_forb,
           "outputs/permanova_forb.csv")
@@ -225,7 +231,7 @@ grass_site_nmds <- as.data.frame(grass_mds$points) %>%
 #PERMANOVA - grass
 
 permanova_grass <- adonis2(GRASSarray ~ Site*Microsite,
-                          data = grass_site_nmds, perm = 999)
+                          data = grass_site_nmds, perm = 999, by = "terms")
 
 write.csv(permanova_grass,
           "outputs/permanova_grass.csv")
@@ -296,8 +302,9 @@ ft_species_nmds <- as.data.frame(ft_mds$points) %>%
          species = FTarray$Species)
 
 ft_spp_colours = tibble(
-  species = c("Commelina", "Helichrysum","Miscanthus", "Oxalis",
-              "Pseudognaphalium", "Themeda", "Tristachya"),
+  species = c("<i>C. africana</i>", "<i>H. odoratissimum</i>","<i>M. capensis</i>",
+              "<i>O. obliquifolia</i>", "<i>P. luteo-album</i>", "<i>T. triandra</i>",
+              "<i>T. leucothrix</i>"),
   colour = c('#003C2F','#01665E', '#543006', '#369890',
              '#7FCEC2', '#BF822E',  '#8D5108'),
   fgroup = c("Forb", "Forb", "Grass", "Forb",
@@ -307,7 +314,7 @@ ft_spp_colours = tibble(
 # PERMANOVA - ft
 
 permanova_ft <- adonis2(FTarray[4:ncol(FTarray)] ~ species + Site*Microsite,
-                        data = ft_species_nmds, perm = 999)
+                        data = ft_species_nmds, perm = 999, by = "terms")
 
 write.csv(permanova_ft,
           "outputs/permanova_ft.csv")
@@ -338,6 +345,7 @@ ggplot(ft_species_nmds,
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
   theme(legend.position = 'bottom',
+        legend.text = element_markdown(),
         plot.title = element_text(size = 20)) +
   xlim(-0.4,0.4) +
   ylim(-0.4,0.4) +
