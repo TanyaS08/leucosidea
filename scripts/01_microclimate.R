@@ -152,11 +152,12 @@ for (i in 1:length(plots)) {
                shape = 8,
                size = 4) +
     facet_wrap(vars(variable),
-               scales = "free") +
+               scales = "free",
+               strip.position = "left") +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
     scale_colour_manual(values = c('goldenrod1','forestgreen'),
                         name = "Microsite") +
-    labs(y = "Value",
+    labs(y = NULL,
          x = NULL) +
     theme_classic() +
     theme(
