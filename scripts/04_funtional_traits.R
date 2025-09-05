@@ -78,20 +78,23 @@ write.csv(model_results,
 
 # plot 
 
-FT_long <- 
+FT_plot <- 
   FT_long %>%
-  mutate(Species = case_when(Species == "Pseudognath" ~ "**Pseudognaphalium**",
-                             Species == "Oxalis" ~ "**Oxalis**",
-                             Species == "Helichrysum" ~ "**Helichrysum**",
-                             Species == "Commelina" ~ "**Commelina**",
+  mutate(Species = case_when(Species == "Pseudognath" ~ "<b><i>P. luteo-album</i></b>",
+                             Species == "Oxalis" ~ "<b><i>O. obliquifolia</i></b>",
+                             Species == "Helichrysum" ~ "<b><i>H. odoratissimum</i></b>",
+                             Species == "Commelina" ~ "<b><i>C. africana</i></b>",
+                             Species == "Miscanthus" ~ "<i>M. capensis</i>",
+                             Species == "Themeda" ~ "<i>T. triandra</i>",
+                             Species == "Tristachya" ~ "<i>T. leucothrix</i>",
                              TRUE ~ as.character(Species))) %>%
-  mutate(Species = factor(Species, levels=c('**Commelina**', '**Helichrysum**', '**Oxalis**', '**Pseudognaphalium**', 
-                                            'Miscanthus', 'Themeda', 'Tristachya')),
+  mutate(Species = factor(Species, levels=c('<b><i>C. africana</i></b>', '<b><i>H. odoratissimum</i></b>', '<b><i>O. obliquifolia</i></b>', '<b><i>P. luteo-album</i></b>', 
+                                            '<i>M. capensis</i>', '<i>T. triandra</i>', '<i>T. leucothrix</i>')),
          trait = case_when(trait == 'Chlorophyll' ~ "Chlorophyll~(mg/m^2)",
                            trait == 'PHeight' ~ "Plant~height~(m)",
                            trait == 'SLA' ~ "SLA~(cm^2%.%g)",
                            trait == 'LDMC' ~ "LDMC",
-                           trait == 'Toughness' ~ "Toughness~(N)",
+                           trait == 'Toughness' ~ "Force~to~pierce~(N)",
                            trait == 'SA' ~ "Leaf~surface~area~(cm^2)"))
 
 # stars (*) for sig diffs)
@@ -99,30 +102,33 @@ starstruck <-
   data.frame(Species = spp_names,
              trait = traits,
              p_val = model_results$p_val) %>%
-  mutate(Species = case_when(Species == "Pseudognath" ~ "**Pseudognaphalium**",
-                             Species == "Oxalis" ~ "**Oxalis**",
-                             Species == "Helichrysum" ~ "**Helichrysum**",
-                             Species == "Commelina" ~ "**Commelina**",
+  mutate(Species = case_when(Species == "Pseudognath" ~ "<b><i>P. luteo-album</i></b>",
+                             Species == "Oxalis" ~ "<b><i>O. obliquifolia</i></b>",
+                             Species == "Helichrysum" ~ "<b><i>H. odoratissimum</i></b>",
+                             Species == "Commelina" ~ "<b><i>C. africana</i></b>",
+                             Species == "Miscanthus" ~ "<i>M. capensis</i>",
+                             Species == "Themeda" ~ "<i>T. triandra</i>",
+                             Species == "Tristachya" ~ "<i>T. leucothrix</i>",
                              TRUE ~ as.character(Species))) %>%
-  mutate(Species = factor(Species, levels=c('**Commelina**', '**Helichrysum**', '**Oxalis**', '**Pseudognaphalium**', 
-                                            'Miscanthus', 'Themeda', 'Tristachya')),
+  mutate(Species = factor(Species, levels=c('<b><i>C. africana</i></b>', '<b><i>H. odoratissimum</i></b>', '<b><i>O. obliquifolia</i></b>', '<b><i>P. luteo-album</i></b>', 
+                                            '<i>M. capensis</i>', '<i>T. triandra</i>', '<i>T. leucothrix</i>')),
          trait = case_when(trait == 'Chlorophyll' ~ "Chlorophyll~(mg/m^2)",
                            trait == 'PHeight' ~ "Plant~height~(m)",
                            trait == 'SLA' ~ "SLA~(cm^2%.%g)",
                            trait == 'LDMC' ~ "LDMC",
-                           trait == 'Toughness' ~ "Toughness~(N)",
+                           trait == 'Toughness' ~ "Force~to~pierce~(N)",
                            trait == 'SA' ~ "Leaf~surface~area~(cm^2)")) %>%
-  full_join(FT_long %>%
+  full_join(FT_plot %>%
               group_by(trait) %>%
               reframe(maxy = max(trait_val))) %>%
   filter(p_val < 0.05)
 
-ggplot(FT_long,
+ggplot(FT_plot,
        aes(x = Species,
            y = trait_val)) +
   geom_boxplot(aes(colour = microsite),
                outliers = FALSE) +
-  geom_point(data = FT_long %>%
+  geom_point(data = FT_plot %>%
                filter(microsite == "Under"),
              aes(x = as.numeric(Species) + 0.2,
                  y = trait_val),
@@ -131,7 +137,7 @@ ggplot(FT_long,
              colour = "white",
              shape = 21,
              position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
-  geom_point(data = FT_long %>%
+  geom_point(data = FT_plot %>%
                filter(microsite == "Away"),
              aes(x = as.numeric(as.factor(Species)) - 0.2,
                  y = trait_val),
@@ -148,15 +154,16 @@ ggplot(FT_long,
   facet_wrap(vars(trait),
              scales = "free",
              labeller = label_parsed,
-             ncol = 2) +
+             ncol = 2,
+             strip.position = "left") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   scale_colour_manual(values = c('goldenrod1','forestgreen'),
                       name = "Microsite") +
-  labs(y = "Trait value",
+  labs(y = NULL,
        caption = "Species in **bold** are forbs and non-bold species are grasses") +
   theme_classic() +
   theme(
-    axis.text.x = element_markdown(),
+    axis.text.x = element_markdown(size = 8),
     plot.caption = element_markdown(),
     legend.position = 'bottom'
   )
