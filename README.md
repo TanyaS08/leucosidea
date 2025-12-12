@@ -10,4 +10,4 @@ Any figures that are generated will be written to `figures/` and data tables to 
 
 ## Dependency management using `{renv}`
 
-`{renv}` has been used for dependency management, specific package versions are recorded in the `renv.lock` file, ensuring others can easily recreate the exact environment. In order to activate this 'local library' you can run `renv::restore()` before working through the code
+`{renv}` has been used for dependency management, specific package versions are recorded in the `renv.lock` file, ensuring others can easily recreate the exact environment. In order to activate this 'local library' you can run `renv::restore()` before working through the code.
