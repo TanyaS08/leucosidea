@@ -92,7 +92,7 @@ FT_plot <-
                                             '<i>M. capensis</i>', '<i>T. triandra</i>', '<i>T. leucothrix</i>')),
          trait = case_when(trait == 'Chlorophyll' ~ "Chlorophyll~(mg/m^2)",
                            trait == 'PHeight' ~ "Plant~height~(m)",
-                           trait == 'SLA' ~ "SLA~(cm^2%.%g)",
+                           trait == 'SLA' ~ "SLA~(mm^2/mg)",
                            trait == 'LDMC' ~ "LDMC",
                            trait == 'Toughness' ~ "Force~to~pierce~(N)",
                            trait == 'SA' ~ "Leaf~surface~area~(cm^2)"))
@@ -114,7 +114,7 @@ starstruck <-
                                             '<i>M. capensis</i>', '<i>T. triandra</i>', '<i>T. leucothrix</i>')),
          trait = case_when(trait == 'Chlorophyll' ~ "Chlorophyll~(mg/m^2)",
                            trait == 'PHeight' ~ "Plant~height~(m)",
-                           trait == 'SLA' ~ "SLA~(cm^2%.%g)",
+                           trait == 'SLA' ~ "SLA~(mm^2/mg)",
                            trait == 'LDMC' ~ "LDMC",
                            trait == 'Toughness' ~ "Force~to~pierce~(N)",
                            trait == 'SA' ~ "Leaf~surface~area~(cm^2)")) %>%
@@ -133,7 +133,7 @@ ggplot(FT_plot,
              aes(x = as.numeric(Species) + 0.2,
                  y = trait_val),
              alpha = 0.3,
-             fill = 'forestgreen',
+             fill = "#046A38",
              colour = "white",
              shape = 21,
              position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
@@ -142,7 +142,7 @@ ggplot(FT_plot,
              aes(x = as.numeric(as.factor(Species)) - 0.2,
                  y = trait_val),
              alpha = 0.3,
-             fill = 'goldenrod1',
+             fill = "#FFB81C",
              colour = "white",
              shape = 21,
              position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
@@ -157,7 +157,7 @@ ggplot(FT_plot,
              ncol = 2,
              strip.position = "left") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  scale_colour_manual(values = c('goldenrod1','forestgreen'),
+  scale_colour_manual(values = c("#FFB81C","#046A38"),
                       name = "Microsite") +
   labs(y = NULL,
        caption = "Species in **bold** are forbs and non-bold species are grasses") +
