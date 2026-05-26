@@ -108,7 +108,7 @@ ggsave("figures/community_pca.png",
 ####PERMANOVA####
 
 permanova_all <- adonis2(COMMarray[2:ncol(COMMarray)] ~ Site*Microsite,
-                         data = comm_site_nmds, perm = 999, by = "terms")
+                         data = comm_site_nmds, perm = 99999, by = "terms")
 
 write.csv(permanova_all,
           "outputs/permanova_all.csv")
@@ -154,7 +154,7 @@ forb_site_nmds <- as.data.frame(forb_mds$points) %>%
 # PERMANOVA - forb
 
 permanova_forb <- adonis2(FORBarray ~ Site*Microsite,
-                          data = forb_site_nmds, perm = 999, by = "terms")
+                          data = forb_site_nmds, perm = 99999, by = "terms")
 
 write.csv(permanova_forb,
           "outputs/permanova_forb.csv")
@@ -187,7 +187,7 @@ forb_nmds_plot <-
                   breaks = c(0.5)) +
   guides(alpha = "none",
          fill = NULL) +
-  scale_fill_manual(values = c('goldenrod1', 'forestgreen'),
+  scale_fill_manual(values = c("#FFB81C","#046A38"),
                     name = "Microsite",
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
@@ -232,7 +232,7 @@ grass_site_nmds <- as.data.frame(grass_mds$points) %>%
 #PERMANOVA - grass
 
 permanova_grass <- adonis2(GRASSarray ~ Site*Microsite,
-                          data = grass_site_nmds, perm = 999, by = "terms")
+                          data = grass_site_nmds, perm = 99999, by = "terms")
 
 write.csv(permanova_grass,
           "outputs/permanova_grass.csv")
@@ -265,7 +265,7 @@ grass_nmds_plot <-
                   breaks = c(0.5)) +
   guides(alpha = "none",
          fill = NULL) +
-  scale_fill_manual(values = c('goldenrod1', 'forestgreen'),
+  scale_fill_manual(values = c("#FFB81C","#046A38"),
                     name = "Microsite",
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
@@ -315,7 +315,7 @@ ft_spp_colours = tibble(
 # PERMANOVA - ft
 
 permanova_ft <- adonis2(FTarray[4:ncol(FTarray)] ~ species + Site*Microsite,
-                        data = ft_species_nmds, perm = 999, by = "terms")
+                        data = ft_species_nmds, perm = 99999, by = "terms")
 
 write.csv(permanova_ft,
           "outputs/permanova_ft.csv")
