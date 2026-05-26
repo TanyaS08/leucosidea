@@ -22,11 +22,11 @@ COMMarray <- read.table("data/spp_richness.txt", header = T, row.names = 1) %>%
   mutate(Habitat = case_when(Habitat == "U" ~ "Under",
                              TRUE ~ "Away")) %>%
   # reorder
-  select(Habitat, everything())
-#remove NA
-COMMarray <- na.omit(COMMarray) %>% 
+  select(Habitat, everything()) %>%
+  na.omit() %>% 
   # remove problem (outlier) site
-  filter(!row.names(.) %in% "A11C")
+  filter(!row.names(.) %in% c("A11C")) %>%
+  select(-Rubus_ludwigii)
 
 # array for traits
 FTarray = read.table("data/FT.txt", header = T, row.names = 1) %>%
@@ -46,8 +46,7 @@ FTarray <- na.omit(FTarray)
 
 ####Analysis - Community####
 
-comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)], 
-                    distance = "bray")
+comm_mds <- metaMDS(COMMarray[2:ncol(COMMarray)])
 
 ####Plot####
 
@@ -124,10 +123,12 @@ FORBarray <-
                               "B1C", "H4U")) %>%
   select(c(growth_forms %>%
              filter(growth_form == "forb") %>%
-             filter(species != 'Dead') %>%
+             filter(species != 'Dead')%>%
+             filter(species != "Rubus_ludwigii") %>%
              pull(species))) %>%
   # remove plots were there are no forbs
-  filter(rowSums(across(where(is.numeric))) != 0)
+  filter(rowSums(across(where(is.numeric))) != 0) %>%
+  select(-Clutia_pulchella, -Diospyros_scabrida, -Morpho_sp._90, -Myosotis_semiamplexicaulis)
 
 # NMDS
 forb_mds <- metaMDS(FORBarray,
