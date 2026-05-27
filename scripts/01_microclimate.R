@@ -39,6 +39,51 @@ env <- left_join(read.table("data/leucosidea_metadata.txt",
   mutate(microsite = as.factor(str_extract(variable, ".{1}$")),
          variable = str_replace(variable, ".{1}$", ""))
 
+###Richness & cover summary statistics
+read.table("data/microclimate.txt", 
+           header = TRUE) %>%
+  select(CovU, RichU, CovC, RichC) %>%
+  pivot_longer(everything()) %>%
+  mutate(category = case_when(name == "RichU" ~ "richness",
+                              name == "CovU" ~ "cover",
+                              name == "RichC" ~ "richness",
+                              name == "CovC" ~ "cover"),
+         plot = case_when(name == "RichU" ~ "under",
+                          name == "CovU" ~ "under",
+                          name == "RichC" ~ "away",
+                          name == "CovC" ~ "away"),
+         taxon = "all") %>%
+  rbind(fg_cover %>%
+          select(-Site, -Pair)%>%
+          pivot_longer(everything()) %>%
+          mutate(category = case_when(name == "cover_forb_C" ~ "cover",
+                                      name == "cover_grass_C" ~ "cover",
+                                      name == "cover_forb_U" ~ "cover",
+                                      name == "cover_grass_U" ~ "cover",
+                                      .default = "richness"),
+                 plot = case_when(name == "cover_forb_C" ~ "away",
+                                  name == "cover_grass_C" ~ "away",
+                                  name == "richness_forb_C" ~ "away",
+                                  name == "richness_grass_C" ~ "away",
+                                  .default = "under"),
+                 taxon = case_when(name == "cover_forb_C" ~ "forb",
+                                   name == "cover_forb_U" ~ "forb",
+                                   name == "richness_forb_C" ~ "forb",
+                                   name == "richness_forb_U" ~ "forb",
+                                   .default = "grass"))) %>%
+  select(-name) %>%
+  group_by(category, taxon) %>%
+  summarise(
+    mean_under = mean(value[plot == "under"], na.rm = TRUE),
+    mean_away  = mean(value[plot == "away"], na.rm = TRUE),
+    sd_away    = sd(value[plot == "under"], na.rm = TRUE),
+    sd_under   = sd(value[plot == "away"], na.rm = TRUE),
+    t_stat     = t.test(value ~ plot)$statistic,
+    p.value    = t.test(value ~ plot)$p.value,
+    .groups = "drop"
+  )
+
+
 ####Mixed effect models####
 
 # get names of all the variables
@@ -130,7 +175,7 @@ for (i in 1:length(plots)) {
                aes(x = 1.2,
                    y = value),
                alpha = 0.3,
-               fill = 'forestgreen',
+               fill = "#046A38",
                colour = "white",
                shape = 21,
                position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
@@ -139,7 +184,7 @@ for (i in 1:length(plots)) {
                aes(x = 0.8,
                    y = value),
                alpha = 0.3,
-               fill = 'goldenrod1',
+               fill = "#FFB81C",
                colour = "white",
                shape = 21,
                position = position_jitternormal(sd_x = 0.05, sd_y = 0)) +
@@ -155,7 +200,7 @@ for (i in 1:length(plots)) {
                scales = "free",
                strip.position = "left") +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-    scale_colour_manual(values = c('goldenrod1','forestgreen'),
+    scale_colour_manual(values = c("#FFB81C","#046A38"),
                         name = "Microsite") +
     labs(y = NULL,
          x = NULL) +
