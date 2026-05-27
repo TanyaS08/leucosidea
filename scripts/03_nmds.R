@@ -128,6 +128,7 @@ FORBarray <-
              pull(species))) %>%
   # remove plots were there are no forbs
   filter(rowSums(across(where(is.numeric))) != 0) %>%
+  # these are 0 sum spp
   select(-Clutia_pulchella, -Diospyros_scabrida, -Morpho_sp._90, -Myosotis_semiamplexicaulis)
 
 # NMDS
