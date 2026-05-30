@@ -2,6 +2,8 @@
 library(ggforce)
 library(ggtext)
 library(tidyverse)
+library(lme4)
+library(car)
 
 ####Import data####
 FT = read.table("data/FT.txt", header=T) %>%
@@ -156,18 +158,18 @@ ggplot(FT_plot,
              labeller = label_parsed,
              ncol = 2,
              strip.position = "left") +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  #scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   scale_colour_manual(values = c("#FFB81C","#046A38"),
                       name = "Microsite") +
   labs(y = NULL,
        caption = "Species in **bold** are forbs and non-bold species are grasses") +
   theme_classic() +
   theme(
-    axis.text.x = element_markdown(size = 8),
+    axis.text.x = element_markdown(size = 8, angle = 45, hjust = 1),
     plot.caption = element_markdown(),
     legend.position = 'bottom'
   )
 
 ggsave("figures/FT_boxplot.png",
        width = 8,
-       height = 13)
+       height = 15)
