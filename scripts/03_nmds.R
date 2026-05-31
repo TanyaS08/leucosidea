@@ -62,31 +62,25 @@ comm_site_nmds <- as.data.frame(comm_mds$points) %>%
   mutate(Microsite = COMMarray$Habitat,
          Site = str_extract(row.names(.), "^.{1}"))
 
-ggplot(comm_site_nmds,
+ggplot(comm_sp_nmds,
        aes(x = MDS1,
            y = MDS2)) +
-  scale_alpha(range = c(0.3, 0.7)) +
-  geom_point(size = 0.8,
-             alpha = 0.6,
-             colour = "grey50") +
   stat_density_2d(data = comm_sp_nmds,
                   geom = "polygon",
                   aes(x = MDS1,
                       y = MDS2,
                       fill = growth_form,
-                      alpha = ..nlevel..),
-                  contour_var = "ndensity",
-                  breaks = c(0.5, 0.9)) +
-  stat_density_2d(data = comm_sp_nmds,
-                  geom = "polygon",
-                  aes(x = MDS1,
-                      y = MDS2,
                       colour = growth_form),
                   contour_var = "ndensity",
-                  fill = NA,
-                  breaks = c(0.5)) +
-  guides(alpha = FALSE,
-         fill = NULL) +
+                  breaks = c(0.5),
+                  alpha = 0.3) +
+  geom_point(size = 3,
+             alpha = 0.6,
+             fill = "grey50",
+             colour = "white",
+             shape = 21,
+             show.legend = NA) +
+  guides(alpha = "none") +
   facet_grid(cols = vars(Microsite)) +
   scale_fill_manual(values = c('#01665E', '#BF822E'),
                     name = "Growth form") +
@@ -94,7 +88,8 @@ ggplot(comm_site_nmds,
                       name = "Growth form") +
   theme_classic() +
   theme(legend.position = 'bottom',
-        plot.title = element_text(size = 20)) +
+        plot.title = element_text(size = 20),
+        plot.caption = element_text(size = 12)) +
   xlim(-0.65,0.65) +
   ylim(-0.65,0.65) +
   labs(x = "MDS1",
@@ -166,26 +161,21 @@ forb_nmds_plot <-
   ggplot(forb_site_nmds,
          aes(x = MDS1,
              y = MDS2)) +
-  scale_alpha(range = c(0.3, 0.7)) +
-  geom_point(size = 0.8,
+  stat_density_2d(data = forb_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      colour = Microsite,
+                      fill = Microsite),
+                  contour_var = "ndensity",
+                  breaks = c(0.5),
+                  alpha = 0.3) +
+  geom_point(aes(fill = Microsite),
+             size = 3,
              alpha = 0.6,
-             colour = "grey50") +
-  stat_density_2d(data = forb_sp_nmds,
-                  geom = "polygon",
-                  aes(x = MDS1,
-                      y = MDS2,
-                      fill = Microsite,
-                      alpha = after_stat(nlevel)),
-                  contour_var = "ndensity",
-                  breaks = c(0.5, 0.9)) +
-  stat_density_2d(data = forb_sp_nmds,
-                  geom = "polygon",
-                  aes(x = MDS1,
-                      y = MDS2,
-                      colour = Microsite),
-                  contour_var = "ndensity",
-                  fill = NA,
-                  breaks = c(0.5)) +
+             colour = "white",
+             shape = 21,
+             show.legend = NA) +
   guides(alpha = "none",
          fill = NULL) +
   scale_fill_manual(values = c("#FFB81C","#046A38"),
@@ -193,7 +183,8 @@ forb_nmds_plot <-
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
   theme(legend.position = 'bottom',
-        plot.title = element_text(size = 20)) +
+        plot.title = element_text(size = 20),
+        plot.caption = element_text(size = 12)) +
   labs(x = "MDS1",
        y = "MDS2",
        caption = paste0( "Stress = ", round(forb_mds$stress*100, digits = 2), "%"))
@@ -244,26 +235,21 @@ grass_nmds_plot <-
   ggplot(grass_site_nmds,
          aes(x = MDS1,
              y = MDS2)) +
-  scale_alpha(range = c(0.3, 0.7)) +
-  geom_point(size = 0.8,
+  stat_density_2d(data = grass_sp_nmds,
+                  geom = "polygon",
+                  aes(x = MDS1,
+                      y = MDS2,
+                      colour = Microsite,
+                      fill = Microsite),
+                  contour_var = "ndensity",
+                  breaks = c(0.5),
+                  alpha = 0.3) +
+  geom_point(aes(fill = Microsite),
+             size = 3,
              alpha = 0.6,
-             colour = "grey50") +
-  stat_density_2d(data = grass_sp_nmds,
-                  geom = "polygon",
-                  aes(x = MDS1,
-                      y = MDS2,
-                      fill = Microsite,
-                      alpha = after_stat(nlevel)),
-                  contour_var = "ndensity",
-                  breaks = c(0.5, 0.9)) +
-  stat_density_2d(data = grass_sp_nmds,
-                  geom = "polygon",
-                  aes(x = MDS1,
-                      y = MDS2,
-                      colour = Microsite),
-                  contour_var = "ndensity",
-                  fill = NA,
-                  breaks = c(0.5)) +
+             colour = "white",
+             shape = 21,
+             show.legend = NA) +
   guides(alpha = "none",
          fill = NULL) +
   scale_fill_manual(values = c("#FFB81C","#046A38"),
@@ -271,7 +257,8 @@ grass_nmds_plot <-
                     aesthetics = c("colour", "fill")) +
   theme_classic() +
   theme(legend.position = 'bottom',
-        plot.title = element_text(size = 20)) +
+        plot.title = element_text(size = 20),
+        plot.caption = element_text(size = 12)) +
   labs(x = "MDS1",
        y = "MDS2",
        caption = paste0( "Stress = ", round(grass_mds$stress*100, digits = 2), "%"))
@@ -327,21 +314,18 @@ ggplot(ft_species_nmds,
        aes(x = MDS1,
            y = MDS2)) +
   scale_alpha(range = c(0.3, 0.7)) +
-  geom_point(size = 0.8,
-             alpha = 0.6,
-             colour = "grey50") +
   stat_density_2d(geom = "polygon",
                   aes(fill = species,
-                      alpha = after_stat(nlevel)),
+                      colour = species),
                   contour_var = "ndensity",
-                  breaks = c(0.5, 0.9)) +
-  stat_density_2d(geom = "polygon",
-                  aes(colour = species),
-                  contour_var = "ndensity",
-                  fill = NA,
-                  breaks = c(0.5)) +
-  guides(alpha = FALSE,
-         fill = NULL) +
+                  breaks = c(0.5),
+                  alpha = 0.6) +
+  geom_point(size = 3,
+             alpha = 0.6,
+             colour = "white",
+             fill = "grey50",
+             shape = 21) +
+  guides(alpha = "none") +
   facet_grid(cols = vars(Microsite)) +
   scale_fill_manual(values = ft_spp_colours$colour,
                     aesthetics = c("colour", "fill")) +
