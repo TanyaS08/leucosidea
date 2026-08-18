@@ -24,9 +24,10 @@ Notes on scripts
 - scripts/_internals.R contains helper functions and is sourced by the numbered scripts.
 - Scripts are ordered to reflect the manuscript workflow. The main analysis scripts include:
   - scripts/01_microclimate.R
-  - scripts/02_chi_squared.R
+  - scripts/02_glmm_occurence.R
   - scripts/03_nmds.R
   - scripts/04_funtional_traits.R
+  - scripts/05_chi_squared.R
 
 Reproducibility
 - renv is used to pin package versions. After cloning, run renv::restore() to recreate the environment.
