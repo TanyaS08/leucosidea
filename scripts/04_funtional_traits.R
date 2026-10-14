@@ -4,6 +4,7 @@ library(ggtext)
 library(tidyverse)
 library(lme4)
 library(car)
+library(MuMIn)
 
 ####Import data####
 FT = read.table("data/FT.txt", header=T) %>%
@@ -101,8 +102,8 @@ FT_plot <-
 
 # stars (*) for sig diffs)
 starstruck <-
-  data.frame(Species = spp_names,
-             trait = traits,
+  data.frame(Species = model_results$species,
+             trait = model_results$trait,
              p_val = model_results$p_val) %>%
   mutate(Species = case_when(Species == "Pseudognath" ~ "<b><i>P. luteo-album</i></b>",
                              Species == "Oxalis" ~ "<b><i>O. obliquifolia</i></b>",
